@@ -20,3 +20,5 @@
 /Participant_350_BR.txt
 /Participant_350_HR.txt
 /sensor.py
+*.pyc
+*.pyo
