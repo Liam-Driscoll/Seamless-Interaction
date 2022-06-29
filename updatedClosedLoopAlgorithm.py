@@ -43,7 +43,7 @@ def sensor():
         action = -1
         breathAction = " INHALING "
 
-    elif slope < -0.75:   
+    elif slope < -0.9:   
         dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
         data = dt_string + ": Exhaling"
         action = 0
