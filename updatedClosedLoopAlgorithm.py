@@ -1,4 +1,5 @@
 from itertools import count
+from tracemalloc import start
 from gdx import gdx
 from datetime import datetime
 gdx = gdx.gdx()
@@ -9,10 +10,12 @@ sleep = 0
 def sensorSetUp():
     global list_of_measurements
     global time_between_measurements
-    global startingPattern 
+    global startingPattern
+    global pattern 
     global actions
     actions = []
     startingPattern = [2000, 3500, 4000] # time in (ms)
+    pattern = [2000, 3500, 4000] # time in (ms)
     list_of_measurements = [0]
     time_between_measurements = 300 #in (ms)
     
@@ -67,7 +70,7 @@ def completionCheck():
 
 # calculates number of measurements in each time interval
     times = []
-    for time in startingPattern:
+    for time in pattern:
         times.append(time/time_between_measurements)
 
 # loops through each time interval and the number of measurements recorded in the current interval
@@ -141,11 +144,12 @@ def completionCheck():
 
 # changes the breathing pattern duration once the current pattern is completed
 def changePattern():
-    for i in range(len(startingPattern)):
-        startingPattern[i] += 500
-    print(startingPattern)
+    for i in range(len(pattern)):
+        pattern[i] += 500
+    print(pattern)
 
-
+def resetPattern():
+    pattern = startingPattern
 '''
 sensorSetUp()    
 for i in range(1,501):

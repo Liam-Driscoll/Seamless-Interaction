@@ -61,6 +61,11 @@ async def send_data():
         await websocket.send(str(sensor_data[1]))
         #print(f">>> {sensor_data}")
 
+async def receive_data(message):
+    #uri = "ws://localhost:8765"
+    #uri = "ws://172.20.10.4:8765" #hotspot
+    uri = "ws://206.87.9.211:8765" #ubcsecure
+
 if __name__ == "__main__":
     sensorSetUp()
     while True:

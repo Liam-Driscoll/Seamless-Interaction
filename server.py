@@ -1,6 +1,7 @@
 import asyncio
 from re import L
 import websockets
+from updatedClosedLoopAlgorithm import resetPattern
 
 connected = set()
 
@@ -20,7 +21,7 @@ async def hello(websocket):
                 createHRFile(data)
                 createBRFile(data)
             try:
-                if "PDT" in data:
+                if "." in data:
                     writeHR(data)
                 if "ing" in data:
                     writeBR(data)
@@ -31,9 +32,14 @@ async def hello(websocket):
 
             #await websocket.send(greeting)
             for connection in connected:
+                # only sends data to other clients (doesn't send to itself)
                 if connection != websocket:
+                    #only send data to watch if pattern is completed 
                     if  data == "1":
                         await connection.send(data)
+                    # resets vibration pattern once guidance is finished
+                    elif data == "reset":
+                        resetPattern(data)
             #print(f"> {greeting}")
     finally:
         connected.remove(websocket)
