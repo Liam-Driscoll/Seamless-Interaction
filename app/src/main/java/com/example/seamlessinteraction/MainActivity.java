@@ -42,6 +42,7 @@ public class MainActivity extends Activity {
         // now by putExtra method put the value in key, value pair
         // key is message_key by this key we will receive the value, and put the string
         intent.putExtra("fileValue", fileName);
+        intent.putExtra("participantID", participantID);
         startActivity(intent);
     }
 }

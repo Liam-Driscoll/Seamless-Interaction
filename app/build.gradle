@@ -35,5 +35,6 @@ dependencies {
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'com.google.android.material:material:1.4.0'
+    implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation files('libs\\Java-WebSocket-1.5.3.jar')
 }

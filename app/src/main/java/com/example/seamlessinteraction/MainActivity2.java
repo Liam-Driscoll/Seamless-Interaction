@@ -40,6 +40,7 @@ public class MainActivity2 extends AppCompatActivity {
     private boolean timerRunning;
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
+    long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] notificationVibrationPattern = {0, 1000};
 
@@ -53,7 +54,7 @@ public class MainActivity2 extends AppCompatActivity {
     String trialString = String.valueOf(trial);
 
     // placeholder, but will be based on even/odd participant ID
-    String type = "X";
+    String type = null;
     int exerciseNum = 0;
 
     // list of events/windows/pages in the order they will be displayed
@@ -72,8 +73,9 @@ public class MainActivity2 extends AppCompatActivity {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         Log.d("buttonCount", String.valueOf(events.length-1));
-        //connectWebSocket();
-        //vibrate();
+
+        connectWebSocket();
+        checkOrder();
 
         // goes forward an event/window
         nextButton.setOnClickListener(new View.OnClickListener() {
@@ -307,11 +309,9 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // creates a countdown timer and displays it on the watch
     public void timer(long duration){
         TextView timerText = (TextView) findViewById(R.id.timerText);
-        TextView textView = (TextView) findViewById(R.id.textView);
-        Button nextButton = findViewById(R.id.button);
-        Button backButton = findViewById(R.id.backButton);
         Button skipButton = findViewById(R.id.skipButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         timerRunning = true;
@@ -328,9 +328,15 @@ public class MainActivity2 extends AppCompatActivity {
 
             @Override
             public void onFinish() {
+                // stops the vibration guidance when the timer finishes
                 if (duration > 100000) {
                     guidanceVibrate(1);
+                    // resets the vibration guidance pattern if closed loop guidance is being given
+                    if (type == "X"){
+                        resetVibration();
+                    }
                 }
+                // provides a vibration notification that the timer is finished
                 notificationVibrate();
                 eventNumber++;
                 changeEvent(events[eventNumber]);
@@ -342,6 +348,10 @@ public class MainActivity2 extends AppCompatActivity {
             public void onClick(View v) {
                 if (duration > 100000) {
                     guidanceVibrate(1);
+                    // resets the vibration guidance pattern if closed loop guidance is being given
+                    if (type == "X"){
+                        resetVibration();
+                    }
                 }
                 countDownTimer.cancel();
                 eventNumber--;
@@ -355,6 +365,10 @@ public class MainActivity2 extends AppCompatActivity {
             public void onClick(View v) {
                 if (duration > 100000) {
                     guidanceVibrate(1);
+                    // resets the vibration guidance pattern if closed loop guidance is being given
+                    if (type == "X"){
+                        resetVibration();
+                    }
                 }
                 countDownTimer.cancel();
                 eventNumber++;
@@ -381,18 +395,13 @@ public class MainActivity2 extends AppCompatActivity {
         vibrator.vibrate(notificationVibrationPattern, indexInPatternToRepeat);
     }
 
-/*
+
     private SensorEventListener mSensorListener = new SensorEventListener() {
         @Override
         public void onSensorChanged(SensorEvent event) {
-            heart_rate.setText(String.valueOf(event.values[0]));
-            sendMessage();
-            //String hr = heart_rate.getText().toString();
-            //String heartRate = hr;
-            //Log.i("Websocket", heartRate);
-            //Log.i("Websocket", heartRate.getClass().getName());
-            //mWebSocketClient.send(heartRate);
-            //writeHeartRate();
+            String heart_rate = String.valueOf(event.values[0]);
+            Log.d("hr",heart_rate);
+            sendMessage(heart_rate);
         }
 
         @Override
@@ -454,19 +463,21 @@ public class MainActivity2 extends AppCompatActivity {
         mWebSocketClient.connect();
     }
 
-    public void sendMessage(){
-        String hr = heart_rate.getText().toString();
-        Date currentTime = Calendar.getInstance().getTime(); // gets current time
+    public void sendMessage(String message){
+        /*Date currentTime = Calendar.getInstance().getTime(); // gets current time
         String currentTime_string = currentTime.toString();
         String space = " ";
-        String comma = ",";
-        mWebSocketClient.send(currentTime_string+space+hr+comma+space);
+        String comma = ",";*/
+        mWebSocketClient.send(message);
     }
 
+    // changes vibration guidance pattern when completion message is received
     public void receiveMessage(String msg){
         Log.i("Websocket", "MESSAGE RECEIVED: " + msg);
-        textView.setText(msg);
-        changePattern();
+        // only changes pattern if the guidance is closed-loop (feedback)
+        if (type == "X" && events[eventNumber] == 12){
+            changePattern();
+        }
     }
 
     public void changePattern(){
@@ -476,9 +487,9 @@ public class MainActivity2 extends AppCompatActivity {
         }
         int length = vibrationPattern.length;
         Log.i("Websocket", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
-        vibrate();
+        guidanceVibrate(0);
     }
-*/
+
     public void guidanceVibrate(int stop){
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         if (stop == 1){
@@ -488,6 +499,28 @@ public class MainActivity2 extends AppCompatActivity {
             final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
             vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
         }
+    }
+
+    public void checkOrder(){
+        Intent intent = getIntent();
+        // receive the value from the other activity by getStringExtra() method
+        // and key must be same which is send by first activity
+        String participantID_string = intent.getStringExtra("participantID");
+        int participantID = Integer.parseInt(participantID_string);
+        if (participantID % 2 == 0){
+            type = "X";
+        }
+        else{
+            type = "Y";
+        }
+    }
+
+    public void resetVibration(){
+        vibrationPattern = startingVibrationPattern;
+        int length = vibrationPattern.length;
+        Log.d("websocket", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
+        String reset = "reset";
+        sendMessage(reset);
     }
 
 }
