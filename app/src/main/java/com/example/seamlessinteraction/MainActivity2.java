@@ -41,6 +41,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
+    long [] notificationVibrationPattern = {0, 1000};
 
     private TextView textView;
     private TextView timerText;
@@ -56,7 +57,7 @@ public class MainActivity2 extends AppCompatActivity {
     int exerciseNum = 0;
 
     // list of events/windows/pages in the order they will be displayed
-    int [] events = {15,1,2,3,4,5,6,7,8,9,10,1,11,12,13,14};
+    int [] events = {20,15,1,2,3,4,5,6,7,8,9,10,1,11,12,13,1,14}; // TAKE OUT 15 AND TEST
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,7 +135,8 @@ public class MainActivity2 extends AppCompatActivity {
         Button cancelButton = findViewById(R.id.cancelButton);
         String stringEventNumber = String.valueOf(eventNumber);
         String stringExerciseNum = String.valueOf(exerciseNum);
-        Log.d("buttonCount", "Array Index: " + stringEventNumber);
+        //Log.d("buttonCount", "Array Index: " + stringEventNumber);
+        Log.d("buttonCount", "Case Number: " + String.valueOf(caseNum));
         //Log.d("buttonCount", "Exercise Num: " + stringExerciseNum);
         /*if (exerciseNum == 0){
             exercise = "Jump Squats";
@@ -148,6 +150,15 @@ public class MainActivity2 extends AppCompatActivity {
 
         // switch statement containing each event/window/page's details
         switch(caseNum){
+            case 20:
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.VISIBLE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Complete the SAM and NASA-TLX Survey");
+                nextButton.setText("Done");
+                break;
             case 1:
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
@@ -244,7 +255,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Breathing Guidance Trial" + type);
+                textView.setText("Breathing Guidance " + type);
                 nextButton.setText("Start");
                 break;
             case 12:
@@ -253,8 +264,9 @@ public class MainActivity2 extends AppCompatActivity {
                 nextButton.setVisibility(View.GONE);
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
-                textView.setText("Breathing Guidance Trial" + trialString);
+                textView.setText("Breathing Guidance " + type);
                 timer(120000);
+                guidanceVibrate(0);
                 break;
             case 13:
                 timerText.setVisibility(View.GONE);
@@ -262,7 +274,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Breathing Guidance Trial " + trialString + " Complete");
+                textView.setText("Breathing Guidance " + type + " Complete");
                 nextButton.setText("Next");
                 break;
             case 14:
@@ -273,17 +285,25 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Trial " + trialString + " Complete");
                 nextButton.setText("Next");
+                break;
             case 15:
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Trial " + trialString);
+                nextButton.setText("Begin");
+                break;
+           /* default:
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Complete the SAM and NASA-TLX Survey");
-                nextButton.setText("Done");
-                break;
-            default:
-                break;
+                textView.setText("");
+                nextButton.setText("");
+                break;*/
         }
     }
 
@@ -308,6 +328,10 @@ public class MainActivity2 extends AppCompatActivity {
 
             @Override
             public void onFinish() {
+                if (duration > 100000) {
+                    guidanceVibrate(1);
+                }
+                notificationVibrate();
                 eventNumber++;
                 changeEvent(events[eventNumber]);
             }
@@ -316,6 +340,9 @@ public class MainActivity2 extends AppCompatActivity {
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (duration > 100000) {
+                    guidanceVibrate(1);
+                }
                 countDownTimer.cancel();
                 eventNumber--;
                 changeEvent(events[eventNumber]);
@@ -326,6 +353,9 @@ public class MainActivity2 extends AppCompatActivity {
         skipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (duration > 100000) {
+                    guidanceVibrate(1);
+                }
                 countDownTimer.cancel();
                 eventNumber++;
                 changeEvent(events[eventNumber]);
@@ -343,6 +373,12 @@ public class MainActivity2 extends AppCompatActivity {
             type = "X";
         }
         return type;
+    }
+
+    public void notificationVibrate(){
+        Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        final int indexInPatternToRepeat = -1; //-1: don't repeat, 0: repeat
+        vibrator.vibrate(notificationVibrationPattern, indexInPatternToRepeat);
     }
 
 /*
@@ -442,11 +478,16 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i("Websocket", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
         vibrate();
     }
-
-    public void vibrate(){
+*/
+    public void guidanceVibrate(int stop){
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-        final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
-        vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+        if (stop == 1){
+            vibrator.cancel();
+        }
+        else {
+            final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
+            vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+        }
     }
-    */
+
 }
