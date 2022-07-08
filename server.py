@@ -1,7 +1,7 @@
 import asyncio
 from re import L
 import websockets
-from updatedClosedLoopAlgorithm import resetPattern
+import updatedClosedLoopAlgorithm
 
 connected = set()
 
@@ -25,6 +25,14 @@ async def hello(websocket):
                     writeHR(data)
                 if "ing" in data:
                     writeBR(data)
+                # resets vibration pattern once guidance is finished
+                if "reset" in data:
+                    print("Pattern is being reset...")
+                    try:
+                        f = open("reset.txt", 'w')
+                        f.write("reset")
+                    except Exception as e:
+                        print(e)
             except:
                 pass
 
@@ -36,33 +44,38 @@ async def hello(websocket):
                 if connection != websocket:
                     #only send data to watch if pattern is completed 
                     if  data == "1":
+                        print("Pattern complete!")
                         await connection.send(data)
-                    # resets vibration pattern once guidance is finished
-                    elif data == "reset":
-                        resetPattern(data)
             #print(f"> {greeting}")
     finally:
         connected.remove(websocket)
 
 def createHRFile(participant):
-    file = open(participant+"_HR.txt", "x")
+    try:
+        file = open(participant+"_HR.txt", "x")
+    except (FileExistsError):
+        print("HR file exists")
 
 def createBRFile(participant):
-    file = open(participant+"_BR.txt", "x")
+    try:
+        file = open(participant+"_BR.txt", "x")
+    except(FileExistsError):
+        print("BR file exists")
 
 def writeHR(heartRate):
     file = open(participant+"_HR.txt", "a")
-    file.write(heartRate)
+    file.write(heartRate+",\n")
 
 def writeBR(breathRate):
     file = open(participant+"_BR.txt", "a")
-    file.write(breathRate)
+    file.write(breathRate+",\n")
 
 async def main():
     async with websockets.serve(hello, "206.87.9.211", 8765):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":
+    print("Server Opened")
     asyncio.run(main())
 
 
