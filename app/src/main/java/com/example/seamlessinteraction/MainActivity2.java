@@ -41,6 +41,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
     long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
+    long [] goalVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 4000, 7000, 8000};
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] notificationVibrationPattern = {0, 1000};
 
@@ -70,11 +71,12 @@ public class MainActivity2 extends AppCompatActivity {
         Button backButton = findViewById(R.id.backButton);
         Button skipButton = findViewById(R.id.skipButton);
 
+        connectWebSocket();
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         Log.d("buttonCount", String.valueOf(events.length-1));
 
-        connectWebSocket();
+
         checkOrder();
 
         // goes forward an event/window
@@ -88,6 +90,7 @@ public class MainActivity2 extends AppCompatActivity {
                         eventNumber = 0;  //FIND WHAT MAKES IT GO TO INDEX 0 (NOT HERE)
                         type = switchType(type);
                         trial = 1;
+                        trialString = String.valueOf(trial);
                     }
                     else {
                         Log.d("trial", "2");
@@ -267,6 +270,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Breathing Guidance " + type);
+                resetVibration();
                 timer(120000);
                 guidanceVibrate(0);
                 break;
@@ -412,7 +416,7 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(mSensorListener, mSensor, 250000); // can replace "SensorManager.SENSOR_DELAY_NORMAL" with time in microseconds for sampling time
+        mSensorManager.registerListener(mSensorListener, mSensor, SensorManager.SENSOR_DELAY_FASTEST); // can replace "SensorManager.SENSOR_DELAY_NORMAL" with time in microseconds for sampling time
     }
 
     @Override
@@ -468,6 +472,7 @@ public class MainActivity2 extends AppCompatActivity {
         String currentTime_string = currentTime.toString();
         String space = " ";
         String comma = ",";*/
+        Log.d("sending", message);
         mWebSocketClient.send(message);
     }
 
@@ -497,7 +502,12 @@ public class MainActivity2 extends AppCompatActivity {
         }
         else {
             final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
-            vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+            if (type == "X") {
+                vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+            }
+            else{
+                vibrator.vibrate(goalVibrationPattern, indexInPatternToRepeat);
+            }
         }
     }
 
@@ -518,7 +528,7 @@ public class MainActivity2 extends AppCompatActivity {
     public void resetVibration(){
         vibrationPattern = startingVibrationPattern;
         int length = vibrationPattern.length;
-        Log.d("websocket", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
+        Log.d("trial", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
         String reset = "reset";
         sendMessage(reset);
     }
