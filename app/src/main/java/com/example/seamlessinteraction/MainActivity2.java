@@ -47,23 +47,23 @@ public class MainActivity2 extends AppCompatActivity {
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] notificationVibrationPattern = {0, 1000};
 
-    private TextView textView;
-    private TextView timerText;
     private SensorManager mSensorManager;
     private Sensor mSensor;
 
     int eventNumber = 0;
     int trial = 1;
+    int trialTotal = 1;
     String trialString = String.valueOf(trial);
 
-    // placeholder, but will be based on even/odd participant ID
+    // Based on even/odd participant ID
     String type = null;
-    int currentHR = 0;
+    double currentHR = 0;
     int maxHR = 0;
+    double targetHR = 0.35; // target HR is a fraction of the maximum HR
     int exerciseNum = 0;
 
     // list of events/windows/pages in the order they will be displayed
-    int [] events = {20,15,1,2,3,4,5,6,7,8,9,10,1,11,12,13,1,14};
+    int [] events = {20,15,1,2,3,4,1,11,12,13,1,14,16};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,20 +89,25 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // prevents "index out of bounds" error
-                if (eventNumber == events.length-1){
+                if (eventNumber == events.length-2){
                     if (trial == 3){
                         Log.d("trial", "1");
-                        eventNumber = 1;
+                        eventNumber = 0;
                         type = switchType(type);
                         trial = 1;
                         trialString = String.valueOf(trial);
+                        trialTotal++;
                     }
                     else {
                         Log.d("trial", "2");
                         trial++;
+                        trialTotal++;
                         trialString = String.valueOf(trial);
-                        eventNumber = 2;
+                        eventNumber = 1;
                     }
+                }
+                else if (trialTotal >= 6 && eventNumber == 0){
+                    eventNumber = events.length-1;
                 }
                 else {
                     Log.d("trial", "3");
@@ -137,26 +142,12 @@ public class MainActivity2 extends AppCompatActivity {
 
     // changes the event/window/page that the smartwatch displays
     public void changeEvent(int caseNum){
-        TextView timerText = (TextView) findViewById(R.id.timerText);
-        TextView textView = (TextView) findViewById(R.id.textView);
+        TextView timerText = findViewById(R.id.timerText);
+        TextView textView = findViewById(R.id.textView);
         Button nextButton = findViewById(R.id.button);
         Button backButton = findViewById(R.id.backButton);
         Button skipButton = findViewById(R.id.skipButton);
         Button cancelButton = findViewById(R.id.cancelButton);
-        String stringEventNumber = String.valueOf(eventNumber);
-        String stringExerciseNum = String.valueOf(exerciseNum);
-        //Log.d("buttonCount", "Array Index: " + stringEventNumber);
-        Log.d("buttonCount", "Case Number: " + String.valueOf(caseNum));
-        //Log.d("buttonCount", "Exercise Num: " + stringExerciseNum);
-        /*if (exerciseNum == 0){
-            exercise = "Jump Squats";
-        }
-        else if (exerciseNum == 1){
-            exercise = "High Knees";
-        }
-        else{
-            exercise = "Jumping Jacks";
-        }*/
 
         // switch statement containing each event/window/page's details
         switch(caseNum){
@@ -166,7 +157,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Complete the SAM and NASA-TLX Survey");
+                textView.setText("Complete the NASA-TLX Survey");
                 nextButton.setText("Done");
                 break;
             case 1:
@@ -188,13 +179,14 @@ public class MainActivity2 extends AppCompatActivity {
                 nextButton.setText("Start");
                 break;
             case 3:
-                timerText.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.GONE);
-                nextButton.setVisibility(View.GONE);
-                skipButton.setVisibility(View.VISIBLE);
-                cancelButton.setVisibility(View.VISIBLE);
+                timerText.setVisibility(View.GONE);
+                backButton.setVisibility(View.VISIBLE);
+                nextButton.setVisibility(View.VISIBLE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
                 textView.setText("Perform Jump Squats");
-                timer(30000);
+                nextButton.setText("Skip");
+                //timer(30000);
                 break;
             case 4:
                 timerText.setVisibility(View.GONE);
@@ -205,60 +197,6 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Jump Squats Complete");
                 nextButton.setText("Next");
                 break;
-            case 5:
-                timerText.setVisibility(View.GONE);
-                nextButton.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                textView.setText("Perform High Knees");
-                nextButton.setText("Start");
-                break;
-            case 6:
-                timerText.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.GONE);
-                nextButton.setVisibility(View.GONE);
-                skipButton.setVisibility(View.VISIBLE);
-                cancelButton.setVisibility(View.VISIBLE);
-                textView.setText("Perform High Knees");
-                timer(30000);
-                break;
-            case 7:
-                timerText.setVisibility(View.GONE);
-                nextButton.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                textView.setText("High Knees Complete");
-                nextButton.setText("Next");
-                break;
-            case 8:
-                timerText.setVisibility(View.GONE);
-                nextButton.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                textView.setText("Perform Jumping Jacks");
-                nextButton.setText("Start");
-                break;
-            case 9:
-                timerText.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.GONE);
-                nextButton.setVisibility(View.GONE);
-                skipButton.setVisibility(View.VISIBLE);
-                cancelButton.setVisibility(View.VISIBLE);
-                textView.setText("Perform Jumping Jacks");
-                timer(30000);
-                break;
-            case 10:
-                timerText.setVisibility(View.GONE);
-                nextButton.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                textView.setText("Jumping Jacks Complete");
-                nextButton.setText("Next");
-                break;
             case 11:
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
@@ -266,17 +204,17 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Breathing Guidance " + type);
-                nextButton.setText("Start");
+                nextButton.setText("Skip");
                 break;
             case 12:
-                timerText.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.GONE);
-                nextButton.setVisibility(View.GONE);
-                skipButton.setVisibility(View.VISIBLE);
-                cancelButton.setVisibility(View.VISIBLE);
+                timerText.setVisibility(View.GONE);
+                backButton.setVisibility(View.VISIBLE);
+                nextButton.setVisibility(View.VISIBLE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
                 textView.setText("Breathing Guidance " + type);
                 resetVibration();
-                timer(120000);
+                //timer(120000);
                 guidanceVibrate(0);
                 break;
             case 13:
@@ -306,21 +244,29 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Trial " + trialString);
                 nextButton.setText("Begin");
                 break;
-           /* default:
+            case 16:
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
+                backButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Study Complete\n \nThanks for Participating!");
+                break;
+            default:
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.GONE);
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("");
+                textView.setText("ERROR");
                 nextButton.setText("");
-                break;*/
+                break;
         }
     }
 
     // creates a countdown timer and displays it on the watch
     public void timer(long duration){
-        TextView timerText = (TextView) findViewById(R.id.timerText);
+        TextView timerText = findViewById(R.id.timerText);
         Button skipButton = findViewById(R.id.skipButton);
         Button cancelButton = findViewById(R.id.cancelButton);
         timerRunning = true;
@@ -382,12 +328,11 @@ public class MainActivity2 extends AppCompatActivity {
                 countDownTimer.cancel();
                 eventNumber++;
                 changeEvent(events[eventNumber]);
-                String stringEventNumber = String.valueOf(eventNumber);
-                Log.d("buttonCount", "Skip: " + stringEventNumber);
             }
         });
     }
 
+    // switches to guidance type that has not yet been used
     public String switchType(String type){
         if (type == "X"){
             type = "Y";
@@ -409,7 +354,14 @@ public class MainActivity2 extends AppCompatActivity {
         @Override
         public void onSensorChanged(SensorEvent event) {
             String heart_rate = String.valueOf(event.values[0]);
-            currentHR = Integer.parseInt(heart_rate);
+            currentHR = Float.parseFloat(heart_rate);
+            if (events[eventNumber] == 3){
+                elevatedHR();
+            }
+            else if (events[eventNumber] == 12){
+                relaxedHR();
+            }
+
             Log.d("hr",heart_rate);
             sendMessage(heart_rate);
         }
@@ -473,6 +425,7 @@ public class MainActivity2 extends AppCompatActivity {
         mWebSocketClient.connect();
     }
 
+    // sends message to server via websocket
     public void sendMessage(String message){
         /*Date currentTime = Calendar.getInstance().getTime(); // gets current time
         String currentTime_string = currentTime.toString();
@@ -496,6 +449,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // changes vibration pattern
     public void changePattern(){
         for(int i=1; i<=3; i++){
             int listSize = vibrationPattern.length;
@@ -506,6 +460,7 @@ public class MainActivity2 extends AppCompatActivity {
         guidanceVibrate(0);
     }
 
+    // plays vibration pattern based on type of guidance (open/Y or closed/X)
     public void guidanceVibrate(int stop){
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         if (stop == 1){
@@ -522,6 +477,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // determines order of guidance (open -> closed OR closed -> open) based on participant ID
     public void checkOrder(){
         Intent intent = getIntent();
         // receive the value from the other activity by getStringExtra() method
@@ -536,6 +492,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // receives value of age from MainActivity
     public void checkAge(){
         Intent intent = getIntent();
         String age_string = intent.getStringExtra("age");
@@ -543,6 +500,7 @@ public class MainActivity2 extends AppCompatActivity {
         hrZone(age);
     }
 
+    // determines maximum heart rate based on age (https://www.heart.org/en/healthy-living/fitness/fitness-basics/target-heart-rates)
     public void hrZone(int age){
         if (19 <= age && age < 30){
             maxHR = 200;
@@ -579,6 +537,23 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    public void elevatedHR(){
+        if (currentHR >= maxHR*targetHR){
+            guidanceVibrate(1);
+            eventNumber++;
+            changeEvent(events[eventNumber]);
+        }
+    }
+
+    public void relaxedHR(){
+        if (currentHR <= maxHR*targetHR*1.05){
+            guidanceVibrate(1);
+            eventNumber++;
+            changeEvent(events[eventNumber]);
+        }
+    }
+
+    // resets vibration pattern if guidance is over or interrupted (ie, back, skip buttons pressed)
     public void resetVibration(){
         vibrationPattern = startingVibrationPattern;
         int length = vibrationPattern.length;
