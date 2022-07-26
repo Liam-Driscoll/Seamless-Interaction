@@ -14,6 +14,11 @@ import com.example.seamlessinteraction.databinding.ActivityMainBinding;
 public class MainActivity extends Activity {
 
     private EditText mParticipantID;
+    private TextView text;
+    int counter = 0;
+    String participantID = null;
+    String fileName = null;
+    String age = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -28,13 +33,33 @@ public class MainActivity extends Activity {
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                writeParticipantID();
+                TextView text = (TextView) findViewById(R.id.text);
+                EditText inputText = (EditText) findViewById(R.id.ParticipantID);
+                counter++;
+                if (counter == 1) {
+                    participantID = writeParticipantID();
+                    text.setText("Enter Your Age:");
+                    inputText.getText().clear();
+                }
+                else if (counter == 2){
+                    age = writeAge();
+                    transferValues();
+                }
             }
         });
     }
 
-    public void writeParticipantID() {
+    public String writeParticipantID() {
         String participantID = mParticipantID.getText().toString();
+        return participantID;
+    }
+
+    public String writeAge(){
+        String age = mParticipantID.getText().toString();
+        return age;
+    }
+
+    public void transferValues(){
         String fileName = "Participant_" + participantID; // + ".txt";
 
         // Create the Intent object of this class Context() to Second_activity class
@@ -43,6 +68,9 @@ public class MainActivity extends Activity {
         // key is message_key by this key we will receive the value, and put the string
         intent.putExtra("fileValue", fileName);
         intent.putExtra("participantID", participantID);
+        intent.putExtra("age", age);
         startActivity(intent);
     }
+
+
 }

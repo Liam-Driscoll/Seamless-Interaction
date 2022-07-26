@@ -15,10 +15,12 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
+import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
 import org.w3c.dom.Text;
 
@@ -56,10 +58,12 @@ public class MainActivity2 extends AppCompatActivity {
 
     // placeholder, but will be based on even/odd participant ID
     String type = null;
+    int currentHR = 0;
+    int maxHR = 0;
     int exerciseNum = 0;
 
     // list of events/windows/pages in the order they will be displayed
-    int [] events = {20,15,1,2,3,4,5,6,7,8,9,10,1,11,12,13,1,14}; // TAKE OUT 15 AND TEST
+    int [] events = {20,15,1,2,3,4,5,6,7,8,9,10,1,11,12,13,1,14};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,6 +82,7 @@ public class MainActivity2 extends AppCompatActivity {
 
 
         checkOrder();
+        checkAge();
 
         // goes forward an event/window
         nextButton.setOnClickListener(new View.OnClickListener() {
@@ -87,7 +92,7 @@ public class MainActivity2 extends AppCompatActivity {
                 if (eventNumber == events.length-1){
                     if (trial == 3){
                         Log.d("trial", "1");
-                        eventNumber = 0;  //FIND WHAT MAKES IT GO TO INDEX 0 (NOT HERE)
+                        eventNumber = 1;
                         type = switchType(type);
                         trial = 1;
                         trialString = String.valueOf(trial);
@@ -96,7 +101,7 @@ public class MainActivity2 extends AppCompatActivity {
                         Log.d("trial", "2");
                         trial++;
                         trialString = String.valueOf(trial);
-                        eventNumber = 1;
+                        eventNumber = 2;
                     }
                 }
                 else {
@@ -189,7 +194,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform Jump Squats");
-                timer(5000);
+                timer(30000);
                 break;
             case 4:
                 timerText.setVisibility(View.GONE);
@@ -216,7 +221,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform High Knees");
-                timer(5000);
+                timer(30000);
                 break;
             case 7:
                 timerText.setVisibility(View.GONE);
@@ -243,7 +248,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform Jumping Jacks");
-                timer(5000);
+                timer(30000);
                 break;
             case 10:
                 timerText.setVisibility(View.GONE);
@@ -404,6 +409,7 @@ public class MainActivity2 extends AppCompatActivity {
         @Override
         public void onSensorChanged(SensorEvent event) {
             String heart_rate = String.valueOf(event.values[0]);
+            currentHR = Integer.parseInt(heart_rate);
             Log.d("hr",heart_rate);
             sendMessage(heart_rate);
         }
@@ -473,7 +479,12 @@ public class MainActivity2 extends AppCompatActivity {
         String space = " ";
         String comma = ",";*/
         Log.d("sending", message);
-        mWebSocketClient.send(message);
+        try {
+            mWebSocketClient.send(message);
+        }
+        catch (WebsocketNotConnectedException e){
+            System.out.println("ERROR "+e);
+        }
     }
 
     // changes vibration guidance pattern when completion message is received
@@ -522,6 +533,49 @@ public class MainActivity2 extends AppCompatActivity {
         }
         else{
             type = "Y";
+        }
+    }
+
+    public void checkAge(){
+        Intent intent = getIntent();
+        String age_string = intent.getStringExtra("age");
+        int age = Integer.parseInt(age_string);
+        hrZone(age);
+    }
+
+    public void hrZone(int age){
+        if (19 <= age && age < 30){
+            maxHR = 200;
+        }
+        else if (30 <= age && age < 35){
+            maxHR = 190;
+        }
+        else if (35 <= age && age < 40){
+            maxHR = 185;
+        }
+        else if (40 <= age && age < 45){
+            maxHR = 180;
+        }
+        else if (45 <= age && age < 50){
+            maxHR = 175;
+        }
+        else if (50 <= age && age < 55){
+            maxHR = 170;
+        }
+        else if (55 <= age && age < 60){
+            maxHR = 165;
+        }
+        else if (60 <= age && age < 65){
+            maxHR = 160;
+        }
+        else if (65 <= age && age < 70){
+            maxHR = 155;
+        }
+        else if (age >= 70){
+            maxHR = 150;
+        }
+        else{
+            maxHR = 200;
         }
     }
 
