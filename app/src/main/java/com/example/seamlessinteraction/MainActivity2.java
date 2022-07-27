@@ -41,7 +41,7 @@ public class MainActivity2 extends AppCompatActivity {
     private WebSocketClient mWebSocketClient;
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
-    long [] goalVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 4000, 7000, 8000};
+    long [] goalVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 3000, 4500, 5000};
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] notificationVibrationPattern = {0, 1000};
 
@@ -82,6 +82,9 @@ public class MainActivity2 extends AppCompatActivity {
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         Log.d("buttonCount", String.valueOf(events.length-1));
 
+        for (int i=0; i<goalVibrationPattern.length; i++){
+            goalVibrationTime += goalVibrationPattern[i];
+        }
 
         checkOrder();
         checkAge();
@@ -456,9 +459,12 @@ public class MainActivity2 extends AppCompatActivity {
 
     // changes vibration pattern
     public void changePattern(){
-        for(int i=1; i<=3; i++){
-            int listSize = vibrationPattern.length;
-            vibrationPattern[listSize - i] += 500;
+        // prevents vibration pattern from increasing beyond goal pattern
+        if (openLoopVibrationTime < goalVibrationTime) {
+            for (int i = 1; i <= 3; i++) {
+                int listSize = vibrationPattern.length;
+                vibrationPattern[listSize - i] += 500;
+            }
         }
         int length = vibrationPattern.length;
         Log.i("pattern", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
