@@ -59,7 +59,7 @@ public class MainActivity2 extends AppCompatActivity {
     String type = null;
     double currentHR = 0;
     int maxHR = 0;
-    double targetHR = 0.35; // target HR is a fraction of the maximum HR
+    double targetHR = 0.5; // target HR is a fraction of the maximum HR
     int exerciseNum = 0;
 
     // list of events/windows/pages in the order they will be displayed
@@ -175,18 +175,17 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Perform Jump Squats");
+                textView.setText("Prepare to Perform High Knees");
                 nextButton.setText("Start");
                 break;
             case 3:
                 timerText.setVisibility(View.GONE);
-                backButton.setVisibility(View.VISIBLE);
-                nextButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
-                textView.setText("Perform Jump Squats");
-                nextButton.setText("Skip");
-                //timer(30000);
+                backButton.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+                textView.setText("Perform High Knees");
+                timer(10000);
                 break;
             case 4:
                 timerText.setVisibility(View.GONE);
@@ -194,7 +193,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Jump Squats Complete");
+                textView.setText("High Knees Complete");
                 nextButton.setText("Next");
                 break;
             case 11:
@@ -203,18 +202,18 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Breathing Guidance " + type);
-                nextButton.setText("Skip");
+                textView.setText("Prepare for Breathing Guidance " + type);
+                nextButton.setText("Start");
                 break;
             case 12:
                 timerText.setVisibility(View.GONE);
-                backButton.setVisibility(View.VISIBLE);
-                nextButton.setVisibility(View.VISIBLE);
-                skipButton.setVisibility(View.GONE);
-                cancelButton.setVisibility(View.GONE);
+                backButton.setVisibility(View.GONE);
+                nextButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Breathing Guidance " + type);
                 resetVibration();
-                //timer(120000);
+                timer(10000);
                 guidanceVibrate(0);
                 break;
             case 13:
@@ -284,7 +283,7 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void onFinish() {
                 // stops the vibration guidance when the timer finishes
-                if (duration > 100000) {
+                if (events[eventNumber] == 12) {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     if (type == "X"){
@@ -301,7 +300,7 @@ public class MainActivity2 extends AppCompatActivity {
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (duration > 100000) {
+                if (events[eventNumber] == 12) {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     if (type == "X"){
@@ -318,7 +317,7 @@ public class MainActivity2 extends AppCompatActivity {
         skipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (duration > 100000) {
+                if (events[eventNumber] == 12) {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     if (type == "X"){
@@ -546,7 +545,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     public void relaxedHR(){
-        if (currentHR <= maxHR*targetHR*1.05){
+        if (currentHR >= maxHR*targetHR*1.05){
             guidanceVibrate(1);
             eventNumber++;
             changeEvent(events[eventNumber]);
