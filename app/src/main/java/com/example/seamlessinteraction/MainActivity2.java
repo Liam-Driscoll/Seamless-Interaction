@@ -41,7 +41,6 @@ public class MainActivity2 extends AppCompatActivity {
     private WebSocketClient mWebSocketClient;
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
-    long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] goalVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 4000, 7000, 8000};
     long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
     long [] notificationVibrationPattern = {0, 1000};
@@ -567,8 +566,9 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    // resets vibration pattern if guidance is over or interrupted (ie, back, skip buttons pressed)
+    // resets vibration pattern if guidance is over or interrupted (i.e. back, skip buttons pressed)
     public void resetVibration(){
+        long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
         vibrationPattern = startingVibrationPattern;
         int length = vibrationPattern.length;
         Log.d("trial", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
