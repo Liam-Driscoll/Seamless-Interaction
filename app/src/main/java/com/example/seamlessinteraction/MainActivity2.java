@@ -39,7 +39,6 @@ public class MainActivity2 extends AppCompatActivity {
     //private static final String SERVER_IP = "10.0.2.2"; // localhost
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
-    private boolean timerRunning;
 
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
     long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
@@ -54,6 +53,9 @@ public class MainActivity2 extends AppCompatActivity {
     int trial = 1;
     int trialTotal = 1;
     String trialString = String.valueOf(trial);
+
+    long openLoopVibrationTime = 0;
+    long goalVibrationTime = 0;
 
     // Based on even/odd participant ID
     String type = null;
@@ -74,6 +76,7 @@ public class MainActivity2 extends AppCompatActivity {
         Button nextButton = findViewById(R.id.button);
         Button backButton = findViewById(R.id.backButton);
         Button skipButton = findViewById(R.id.skipButton);
+        Button cancelButton = findViewById(R.id.cancelButton);
 
         connectWebSocket();
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -138,6 +141,23 @@ public class MainActivity2 extends AppCompatActivity {
                 changeEvent(events[eventNumber]);
             }
         });
+
+        cancelButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                eventNumber--;
+                changeEvent(events[eventNumber]);
+            }
+        });
+
+        // gives the ability to skip past timer if needed, ADD SKIP BUTTON TO TIMER() WITH CANCEL BUTTON
+        skipButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                eventNumber++;
+                changeEvent(events[eventNumber]);
+            }
+        });
     }
 
     // changes the event/window/page that the smartwatch displays
@@ -185,7 +205,6 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform High Knees");
-                timer(10000);
                 break;
             case 4:
                 timerText.setVisibility(View.GONE);
@@ -213,7 +232,6 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Breathing Guidance " + type);
                 resetVibration();
-                timer(10000);
                 guidanceVibrate(0);
                 break;
             case 13:
@@ -268,7 +286,6 @@ public class MainActivity2 extends AppCompatActivity {
         TextView timerText = findViewById(R.id.timerText);
         Button skipButton = findViewById(R.id.skipButton);
         Button cancelButton = findViewById(R.id.cancelButton);
-        timerRunning = true;
 
         CountDownTimer countDownTimer = new CountDownTimer(duration, 1000) {
             @Override
@@ -282,18 +299,10 @@ public class MainActivity2 extends AppCompatActivity {
 
             @Override
             public void onFinish() {
-                // stops the vibration guidance when the timer finishes
+                // changes open loop pattern when the current pattern has finished (open loop increases continually)
                 if (events[eventNumber] == 12) {
-                    guidanceVibrate(1);
-                    // resets the vibration guidance pattern if closed loop guidance is being given
-                    if (type == "X"){
-                        resetVibration();
-                    }
+                    changePattern();
                 }
-                // provides a vibration notification that the timer is finished
-                notificationVibrate();
-                eventNumber++;
-                changeEvent(events[eventNumber]);
             }
         }.start();
 
@@ -303,9 +312,8 @@ public class MainActivity2 extends AppCompatActivity {
                 if (events[eventNumber] == 12) {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
-                    if (type == "X"){
-                        resetVibration();
-                    }
+                    resetVibration();
+
                 }
                 countDownTimer.cancel();
                 eventNumber--;
@@ -319,10 +327,9 @@ public class MainActivity2 extends AppCompatActivity {
             public void onClick(View v) {
                 if (events[eventNumber] == 12) {
                     guidanceVibrate(1);
-                    // resets the vibration guidance pattern if closed loop guidance is being given
-                    if (type == "X"){
-                        resetVibration();
-                    }
+                    // resets the vibration guidance pattern
+                    resetVibration();
+
                 }
                 countDownTimer.cancel();
                 eventNumber++;
@@ -455,7 +462,7 @@ public class MainActivity2 extends AppCompatActivity {
             vibrationPattern[listSize - i] += 500;
         }
         int length = vibrationPattern.length;
-        Log.i("Websocket", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
+        Log.i("pattern", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
         guidanceVibrate(0);
     }
 
@@ -471,7 +478,12 @@ public class MainActivity2 extends AppCompatActivity {
                 vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
             }
             else{
-                vibrator.vibrate(goalVibrationPattern, indexInPatternToRepeat);
+                openLoopVibrationTime = 0;
+                for (int i=0; i<vibrationPattern.length; i++){
+                    openLoopVibrationTime += vibrationPattern[i];
+                }
+                timer(openLoopVibrationTime);
+                vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
             }
         }
     }
@@ -538,6 +550,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void elevatedHR(){
         if (currentHR >= maxHR*targetHR){
+            notificationVibrate();   // provides a vibration notification that the timer is finished
             guidanceVibrate(1);
             eventNumber++;
             changeEvent(events[eventNumber]);
@@ -546,7 +559,9 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void relaxedHR(){
         if (currentHR >= maxHR*targetHR*1.05){
+            notificationVibrate();  // provides a vibration notification that the timer is finished
             guidanceVibrate(1);
+            resetVibration();
             eventNumber++;
             changeEvent(events[eventNumber]);
         }
@@ -557,6 +572,7 @@ public class MainActivity2 extends AppCompatActivity {
         vibrationPattern = startingVibrationPattern;
         int length = vibrationPattern.length;
         Log.d("trial", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
+        Log.d("trial", "Starting Pattern: " + startingVibrationPattern[length - 3] + " " + startingVibrationPattern[length - 2] + " " + startingVibrationPattern[length - 1]);
         String reset = "reset";
         sendMessage(reset);
     }
