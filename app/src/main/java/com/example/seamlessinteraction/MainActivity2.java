@@ -40,9 +40,15 @@ public class MainActivity2 extends AppCompatActivity {
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
 
+    long inhale = 2000;
+    long pulseDelay = 300;
+    long inhaleStep = 500;
+    long pulseDelayStep = 75;
+
+    // vibration pattern layout:
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
-    long [] goalVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 3000, 4500, 5000};
-    long[] vibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
+    long [] goalVibrationPattern = {100, 6000, 900, 100, 900, 100, 900, 100, 900, 100, 900, 100, 900, 0, 100};
+    long[] vibrationPattern = {100, inhale, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 0, 100};
     long [] notificationVibrationPattern = {0, 1000};
 
     private SensorManager mSensorManager;
@@ -461,14 +467,21 @@ public class MainActivity2 extends AppCompatActivity {
     public void changePattern(){
         // prevents vibration pattern from increasing beyond goal pattern
         if (openLoopVibrationTime < goalVibrationTime) {
-            for (int i = 1; i <= 3; i++) {
-                int listSize = vibrationPattern.length;
-                vibrationPattern[listSize - i] += 500;
+            inhale += inhaleStep;
+            pulseDelay += pulseDelayStep;
+            for (int i=0; i<vibrationPattern.length; i++){
+                if (vibrationPattern[i] == inhale - inhaleStep){
+                    vibrationPattern[i] += inhaleStep;
+                }
+                else if (vibrationPattern[i] == pulseDelay - pulseDelayStep){
+                    vibrationPattern[i] += pulseDelayStep;
+                }
             }
         }
-        int length = vibrationPattern.length;
-        Log.i("pattern", "Pattern changed to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
         guidanceVibrate(0);
+
+        int length = vibrationPattern.length;
+        Log.i("pattern", "Pattern changed to:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
     }
 
     // plays vibration pattern based on type of guidance (open/Y or closed/X)
@@ -574,11 +587,10 @@ public class MainActivity2 extends AppCompatActivity {
 
     // resets vibration pattern if guidance is over or interrupted (i.e. back, skip buttons pressed)
     public void resetVibration(){
-        long[] startingVibrationPattern = {0, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 2000, 3500, 4000};
-        vibrationPattern = startingVibrationPattern;
+        inhale = 2000;
+        pulseDelay = 300;
         int length = vibrationPattern.length;
-        Log.d("trial", "Pattern reset to: " + vibrationPattern[length - 3] + " " + vibrationPattern[length - 2] + " " + vibrationPattern[length - 1]);
-        Log.d("trial", "Starting Pattern: " + startingVibrationPattern[length - 3] + " " + startingVibrationPattern[length - 2] + " " + startingVibrationPattern[length - 1]);
+        Log.i("pattern", "Pattern changed to:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
         String reset = "reset";
         sendMessage(reset);
     }
