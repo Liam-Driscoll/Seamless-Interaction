@@ -40,15 +40,18 @@ public class MainActivity2 extends AppCompatActivity {
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
 
-    long inhale = 2000;
-    long pulseDelay = 300;
-    long inhaleStep = 500;
-    long pulseDelayStep = 75;
+    int goalInhale = 6000;
+    int goalPulseDelay = 905;
+    int inhale = 2000;
+    int pulse = 100;
+    int pulseDelay = (inhale-pulse*6)/6;
+    int inhaleStep = (goalInhale-inhale)/8;
+    int pulseDelayStep = (goalPulseDelay-pulseDelay)/8;
 
     // vibration pattern layout:
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
-    long [] goalVibrationPattern = {100, 6000, 900, 100, 900, 100, 900, 100, 900, 100, 900, 100, 900, 0, 100};
-    long[] vibrationPattern = {100, inhale, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 100, pulseDelay, 0, 100};
+    long [] goalVibrationPattern = {100, goalInhale, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, 0, pulse};
+    long[] vibrationPattern = {100, inhale, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, 0, pulse};
     long [] notificationVibrationPattern = {0, 1000};
 
     private SensorManager mSensorManager;
@@ -467,16 +470,16 @@ public class MainActivity2 extends AppCompatActivity {
     public void changePattern(){
         // prevents vibration pattern from increasing beyond goal pattern
         if (openLoopVibrationTime < goalVibrationTime) {
-            inhale += inhaleStep;
-            pulseDelay += pulseDelayStep;
             for (int i=0; i<vibrationPattern.length; i++){
-                if (vibrationPattern[i] == inhale - inhaleStep){
+                if (vibrationPattern[i] == inhale){
                     vibrationPattern[i] += inhaleStep;
                 }
-                else if (vibrationPattern[i] == pulseDelay - pulseDelayStep){
+                else if (vibrationPattern[i] == pulseDelay){
                     vibrationPattern[i] += pulseDelayStep;
                 }
             }
+            inhale += inhaleStep;
+            pulseDelay += pulseDelayStep;
         }
         guidanceVibrate(0);
 
@@ -587,10 +590,22 @@ public class MainActivity2 extends AppCompatActivity {
 
     // resets vibration pattern if guidance is over or interrupted (i.e. back, skip buttons pressed)
     public void resetVibration(){
-        inhale = 2000;
-        pulseDelay = 300;
+        int inhaleReset = 2000;
+        int pulseDelayReset = 233;
+
+        for (int i=0; i<vibrationPattern.length; i++){
+            if (vibrationPattern[i] == inhale){
+                vibrationPattern[i] = inhaleReset;
+            }
+            else if (vibrationPattern[i] == pulseDelay){
+                vibrationPattern[i] = pulseDelayReset;
+            }
+        }
+        inhale = inhaleReset;
+        pulseDelay = pulseDelayReset;
+
         int length = vibrationPattern.length;
-        Log.i("pattern", "Pattern changed to:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
+        Log.i("pattern", "Pattern Reset To:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
         String reset = "reset";
         sendMessage(reset);
     }
