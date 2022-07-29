@@ -33,7 +33,7 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity2 extends Activity {
+public class MainActivity2 extends AppCompatActivity {
 
     private static final String SERVER_IP = "206.87.9.211"; // ubcsecure
     //private static final String SERVER_IP = "172.20.10.4"; // hotspot
@@ -75,6 +75,9 @@ public class MainActivity2 extends Activity {
     double baselineSum = 0;
     int baselineHR;
 
+    String participantID_string;
+    String participantID_message;
+
     // list of events/windows/pages in the order they will be displayed
     int [] events = {0,21,22,23,20,15,1,2,3,4,1,11,12,13,1,14,16};
 
@@ -90,6 +93,8 @@ public class MainActivity2 extends Activity {
         Button cancelButton = findViewById(R.id.cancelButton);
 
         connectWebSocket();
+        checkOrder();
+        checkAge();
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         Log.d("buttonCount", String.valueOf(events.length-1));
@@ -97,9 +102,6 @@ public class MainActivity2 extends Activity {
         for (int i=0; i<goalVibrationPattern.length; i++){
             goalVibrationTime += goalVibrationPattern[i];
         }
-
-        checkOrder();
-        checkAge();
 
         // goes forward an event/window
         nextButton.setOnClickListener(new View.OnClickListener() {
@@ -136,7 +138,7 @@ public class MainActivity2 extends Activity {
                 //Log.d("buttonCount", "Next button pressed");
                 //Log.d("trial", "Trial: " + trialString);
                 String stringEventNumber = String.valueOf(eventNumber);
-                Log.d("buttonCount", "Next: " + stringEventNumber);
+                Log.d("buttonCount", "Next; " + stringEventNumber);
                 changeEvent(events[eventNumber]);
             }
         });
@@ -423,7 +425,7 @@ public class MainActivity2 extends Activity {
             }
 
             Log.d("hr",heart_rate);
-            sendMessage(heart_rate);
+            createMessage(participantID_message, heart_rate, events[eventNumber]);
         }
 
         @Override
@@ -509,6 +511,14 @@ public class MainActivity2 extends Activity {
         }
     }
 
+    public void createMessage(String pID, String hr, long event){
+        String delimiter = ",";
+        String event_string = String.valueOf(event);
+        String message = String.join(delimiter, pID, hr, event_string);
+        sendMessage(message);
+        Log.d("createMessage", "Created message: " + message);
+    }
+
     // changes vibration pattern
     public void changePattern(){
         // prevents vibration pattern from increasing beyond goal pattern
@@ -557,7 +567,8 @@ public class MainActivity2 extends Activity {
         Intent intent = getIntent();
         // receive the value from the other activity by getStringExtra() method
         // and key must be same which is send by first activity
-        String participantID_string = intent.getStringExtra("participantID");
+        participantID_string = intent.getStringExtra("participantID");
+        participantID_message = "P" + participantID_string;
         int participantID = Integer.parseInt(participantID_string);
         if (participantID % 2 == 0){
             type = "X";
