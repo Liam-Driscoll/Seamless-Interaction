@@ -12,10 +12,12 @@ def sensorSetUp():
     global time_between_measurements
     global startingPattern
     global pattern 
+    global goalPattern
     global actions
     actions = []
     startingPattern = [2000, 2000] # time in (ms)
     pattern = [2000, 2000] # time in (ms)
+    goalPattern = [6000, 6000]
     list_of_measurements = [0]
     time_between_measurements = 300 #in (ms)
     
@@ -31,8 +33,8 @@ def sensor():
     now = datetime.now()
 
     raw_measurements = gdx.read()
-    force = raw_measurements[0]
-    respiration_rate = raw_measurements[1]
+    force = round(raw_measurements[0], 2)
+    respiration_rate = round(raw_measurements[1], 2)
     list_of_measurements.append(force)
     resetPattern()
     slope = (list_of_measurements[-1] - list_of_measurements[-2])/(time_between_measurements/1000)
@@ -42,20 +44,17 @@ def sensor():
     # the higher the reliability of the classification the higher the assigned action value
     # since higher action values are more disruptive in the validation process
     if slope > 0.5:
-        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")  # date and time for data storage
-        data = dt_string + ",Inhaling"
+        date = now.strftime("%m/%d/%Y,%H:%M:%S")  # date and time for data storage
         action = 1
         breathAction = "INHALING"
 
     elif slope < -0.5:   
-        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
-        data = dt_string + ",Exhaling"
+        date = now.strftime("%m/%d/%Y,%H:%M:%S")
         action = -1
         breathAction = "EXHALING"
  
     else:
-        dt_string = now.strftime("%m/%d/%Y %H:%M:%S")
-        data = dt_string + ",Holding"
+        date = now.strftime("%m/%d/%Y,%H:%M:%S")
         action = 0
         breathAction = "HOLDING"
 
@@ -63,7 +62,8 @@ def sensor():
    
     completionResult = completionCheck()
     comma = ","
-    results = dt_string + comma + str(completionResult) + comma + breathAction + comma + str(force) + comma + str(respiration_rate)
+    message = [date, str(completionResult), breathAction, str(force), str(respiration_rate), str(pattern[0])]
+    results = comma.join(message)
     #print(completionResult, data)
     return completionResult, results
 
@@ -137,8 +137,9 @@ def completionCheck():
 # changes the breathing pattern duration once the current pattern is completed
 def changePattern():
     global pattern, startingPattern
-    for i in range(len(pattern)):
-        pattern[i] += 500
+    if (pattern[0] < goalPattern[0]):
+        for i in range(len(pattern)):
+            pattern[i] += 500
     print(pattern)
 
 def resetPattern():
