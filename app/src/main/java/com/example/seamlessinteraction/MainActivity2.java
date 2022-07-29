@@ -70,10 +70,12 @@ public class MainActivity2 extends AppCompatActivity {
     double currentHR = 0;
     int maxHR = 0;
     double targetHR = 0.5; // target HR is a fraction of the maximum HR
-    int exerciseNum = 0;
+    int baselineCount = 0;
+    double baselineSum = 0;
+    int baselineHR;
 
     // list of events/windows/pages in the order they will be displayed
-    int [] events = {20,15,1,2,3,4,1,11,12,13,1,14,16};
+    int [] events = {0,21,22,23,20,15,1,2,3,4,1,11,12,13,1,14,16};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -106,7 +108,7 @@ public class MainActivity2 extends AppCompatActivity {
                 if (eventNumber == events.length-2){
                     if (trial == 3){
                         Log.d("trial", "1");
-                        eventNumber = 0;
+                        eventNumber = 4;
                         type = switchType(type);
                         trial = 1;
                         trialString = String.valueOf(trial);
@@ -117,11 +119,14 @@ public class MainActivity2 extends AppCompatActivity {
                         trial++;
                         trialTotal++;
                         trialString = String.valueOf(trial);
-                        eventNumber = 1;
+                        eventNumber = 5;
                     }
                 }
-                else if (trialTotal >= 6 && eventNumber == 0){
+                else if (trialTotal >= 6 && eventNumber == 4){
                     eventNumber = events.length-1;
+                }
+                else if (eventNumber == 3){
+                    eventNumber += 2;
                 }
                 else {
                     Log.d("trial", "3");
@@ -140,8 +145,8 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // prevents "index out of bounds" error
-                if (eventNumber == 1){
-                    eventNumber = 1;
+                if (eventNumber == 5){
+                    eventNumber = 5;
                 }
                 else{
                     eventNumber--;
@@ -182,6 +187,33 @@ public class MainActivity2 extends AppCompatActivity {
 
         // switch statement containing each event/window/page's details
         switch(caseNum){
+            case 21:
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Prepare for Baseline Heart Rate Measurement");
+                nextButton.setText("Start");
+                break;
+            case 22:
+                timerText.setVisibility(View.VISIBLE);
+                nextButton.setVisibility(View.GONE);
+                backButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.VISIBLE);
+                cancelButton.setVisibility(View.VISIBLE);
+                textView.setText("Baseline Heart Rate Measurement");
+                timer(60000);
+                break;
+            case 23:
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.VISIBLE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Baseline Heart Rate Measurement Complete");
+                nextButton.setText("Next");
+                break;
             case 20:
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
@@ -314,6 +346,13 @@ public class MainActivity2 extends AppCompatActivity {
                 if (events[eventNumber] == 12) {
                     changePattern();
                 }
+                else if (events[eventNumber] == 22){
+                    notificationVibrate();
+                    baselineHR = (int) (baselineSum / baselineCount);
+                    Log.d("baseline", String.valueOf(baselineHR));
+                    eventNumber++;
+                    changeEvent(events[eventNumber]);
+                }
             }
         }.start();
 
@@ -377,6 +416,9 @@ public class MainActivity2 extends AppCompatActivity {
             }
             else if (events[eventNumber] == 12){
                 relaxedHR();
+            }
+            else if (events[eventNumber] == 22){
+                measureBaselineHR(currentHR);
             }
 
             Log.d("hr",heart_rate);
@@ -571,20 +613,27 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void elevatedHR(){
         if (currentHR >= maxHR*targetHR){
-            notificationVibrate();   // provides a vibration notification that the timer is finished
             guidanceVibrate(1);
+            notificationVibrate();   // provides a vibration notification that the timer is finished
             eventNumber++;
             changeEvent(events[eventNumber]);
         }
     }
 
     public void relaxedHR(){
-        if (currentHR >= maxHR*targetHR*1.05){
-            notificationVibrate();  // provides a vibration notification that the timer is finished
+        if (currentHR <= maxHR*0.45){
             guidanceVibrate(1);
+            notificationVibrate();  // provides a vibration notification that the timer is finished
             resetVibration();
             eventNumber++;
             changeEvent(events[eventNumber]);
+        }
+    }
+
+    public void measureBaselineHR(double hr){
+        if (hr > 0) {
+            baselineCount++;
+            baselineSum += hr;
         }
     }
 
