@@ -2,6 +2,7 @@ package com.example.seamlessinteraction;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -32,7 +33,7 @@ import java.util.Locale;
 import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity2 extends AppCompatActivity {
+public class MainActivity2 extends Activity {
 
     private static final String SERVER_IP = "206.87.9.211"; // ubcsecure
     //private static final String SERVER_IP = "172.20.10.4"; // hotspot

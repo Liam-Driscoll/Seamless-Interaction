@@ -26,8 +26,8 @@ android {
 }
 
 dependencies {
-
     implementation 'com.google.android.gms:play-services-wearable:17.1.0'
+    implementation 'com.google.android.support:wearable:2.4.0'
     implementation 'androidx.percentlayout:percentlayout:1.0.0'
     implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     implementation 'androidx.recyclerview:recyclerview:1.2.1'
@@ -37,4 +37,5 @@ dependencies {
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'org.slf4j:slf4j-api:1.7.36'
     implementation files('libs\\Java-WebSocket-1.5.3.jar')
+    compileOnly 'com.google.android.wearable:wearable:2.4.0'
 }
