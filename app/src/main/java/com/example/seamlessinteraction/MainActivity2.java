@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity2 extends AppCompatActivity {
 
-    private static final String SERVER_IP = "206.87.9.211"; // ubcsecure
+    private static final String SERVER_IP = "142.231.70.68"; // ubcsecure
     //private static final String SERVER_IP = "172.20.10.4"; // hotspot
     //private static final String SERVER_IP = "10.0.2.2"; // localhost
     public static final String PORT = "8765";
