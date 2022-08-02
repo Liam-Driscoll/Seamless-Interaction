@@ -2,7 +2,6 @@ package com.example.seamlessinteraction;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
@@ -16,26 +15,21 @@ import android.util.Log;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.TextView;
 
 import org.java_websocket.client.WebSocketClient;
 import org.java_websocket.drafts.Draft_6455;
 import org.java_websocket.exceptions.WebsocketNotConnectedException;
 import org.java_websocket.handshake.ServerHandshake;
-import org.w3c.dom.Text;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.Locale;
-import java.util.Timer;
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity2 extends AppCompatActivity {
 
-    private static final String SERVER_IP = "142.231.70.68"; // ubcsecure
+    private static final String SERVER_IP = "206.87.9.22"; // ubcsecure
     //private static final String SERVER_IP = "172.20.10.4"; // hotspot
     //private static final String SERVER_IP = "10.0.2.2"; // localhost
     public static final String PORT = "8765";
@@ -79,7 +73,10 @@ public class MainActivity2 extends AppCompatActivity {
     String participantID_message;
 
     // list of events/windows/pages in the order they will be displayed
-    int [] events = {0,21,22,23,20,15,1,2,3,4,1,11,12,13,1,14,16};
+    // 0 is a filler event (doesn't exist) to facilitate proper indexing functionality
+    String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR", "Completed Baseline HR","NASA-TLX Survey","Begin Trial",
+            "SAM Survey","Prepare Exercise","Perform Exercise","Completed Exercise", "SAM Survey","Prepare Breathing Guidance",
+            "Perform Breathing Guidance", "Completed Breathing Guidance", "SAM Survey","Completed Trial","Study Complete"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -180,7 +177,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     // changes the event/window/page that the smartwatch displays
-    public void changeEvent(int caseNum){
+    public void changeEvent(String caseNum){
         TextView timerText = findViewById(R.id.timerText);
         TextView textView = findViewById(R.id.textView);
         Button nextButton = findViewById(R.id.button);
@@ -190,7 +187,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         // switch statement containing each event/window/page's details
         switch(caseNum){
-            case 21:
+            case "Prepare Baseline HR":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.GONE);
@@ -199,7 +196,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Prepare for Baseline Heart Rate Measurement");
                 nextButton.setText("Start");
                 break;
-            case 22:
+            case "Measure Baseline HR":
                 timerText.setVisibility(View.VISIBLE);
                 nextButton.setVisibility(View.GONE);
                 backButton.setVisibility(View.GONE);
@@ -208,7 +205,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Baseline Heart Rate Measurement");
                 timer(60000);
                 break;
-            case 23:
+            case "Completed Baseline HR":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -217,7 +214,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Baseline Heart Rate Measurement Complete");
                 nextButton.setText("Next");
                 break;
-            case 20:
+            case "NASA-TLX Survey":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -226,7 +223,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Complete the NASA-TLX Survey");
                 nextButton.setText("Done");
                 break;
-            case 1:
+            case "SAM Survey":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -235,7 +232,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Complete the SAM Survey");
                 nextButton.setText("Done");
                 break;
-            case 2:
+            case "Prepare Exercise":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -244,7 +241,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Prepare to Perform High Knees");
                 nextButton.setText("Start");
                 break;
-            case 3:
+            case "Perform Exercise":
                 timerText.setVisibility(View.GONE);
                 backButton.setVisibility(View.GONE);
                 nextButton.setVisibility(View.GONE);
@@ -252,7 +249,7 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform High Knees");
                 break;
-            case 4:
+            case "Completed Exercise":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -261,7 +258,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("High Knees Complete");
                 nextButton.setText("Next");
                 break;
-            case 11:
+            case "Prepare Breathing Guidance":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -270,7 +267,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Prepare for Breathing Guidance " + type);
                 nextButton.setText("Start");
                 break;
-            case 12:
+            case "Perform Breathing Guidance":
                 timerText.setVisibility(View.GONE);
                 backButton.setVisibility(View.GONE);
                 nextButton.setVisibility(View.GONE);
@@ -280,7 +277,7 @@ public class MainActivity2 extends AppCompatActivity {
                 resetVibration();
                 guidanceVibrate(0);
                 break;
-            case 13:
+            case "Completed Breathing Guidance":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -289,7 +286,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Breathing Guidance " + type + " Complete");
                 nextButton.setText("Next");
                 break;
-            case 14:
+            case "Completed Trial":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.VISIBLE);
@@ -298,7 +295,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Trial " + trialString + " Complete");
                 nextButton.setText("Next");
                 break;
-            case 15:
+            case "Begin Trial":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
                 backButton.setVisibility(View.GONE);
@@ -307,7 +304,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Trial " + trialString);
                 nextButton.setText("Begin");
                 break;
-            case 16:
+            case "Study Complete":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.GONE);
                 backButton.setVisibility(View.GONE);
@@ -346,10 +343,10 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void onFinish() {
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
-                if (events[eventNumber] == 12) {
+                if (events[eventNumber] == "Perform Breathing Guidance") {
                     changePattern();
                 }
-                else if (events[eventNumber] == 22){
+                else if (events[eventNumber] == "Measure Baseline HR"){
                     notificationVibrate();
                     baselineHR = (int) (baselineSum / baselineCount);
                     Log.d("baseline", String.valueOf(baselineHR));
@@ -362,7 +359,7 @@ public class MainActivity2 extends AppCompatActivity {
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (events[eventNumber] == 12) {
+                if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     resetVibration();
@@ -378,7 +375,7 @@ public class MainActivity2 extends AppCompatActivity {
         skipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (events[eventNumber] == 12) {
+                if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern
                     resetVibration();
@@ -414,13 +411,13 @@ public class MainActivity2 extends AppCompatActivity {
         public void onSensorChanged(SensorEvent event) {
             String heart_rate = String.valueOf(event.values[0]);
             currentHR = Float.parseFloat(heart_rate);
-            if (events[eventNumber] == 3){
+            if (events[eventNumber] == "Perform Exercise"){
                 elevatedHR();
             }
-            else if (events[eventNumber] == 12){
+            else if (events[eventNumber] == "Perform Breathing Guidance"){
                 relaxedHR();
             }
-            else if (events[eventNumber] == 22){
+            else if (events[eventNumber] == "Measure Baseline HR"){
                 measureBaselineHR(currentHR);
             }
 
@@ -506,12 +503,12 @@ public class MainActivity2 extends AppCompatActivity {
     public void receiveMessage(String msg){
         Log.i("Websocket", "MESSAGE RECEIVED: " + msg);
         // only changes pattern if the guidance is closed-loop (feedback)
-        if (type == "X" && events[eventNumber] == 12){
+        if (type == "X" && events[eventNumber] == "Perform Breathing Guidance"){
             changePattern();
         }
     }
 
-    public void createMessage(String pID, String hr, long event){
+    public void createMessage(String pID, String hr, String event){
         String delimiter = ",";
         String event_string = String.valueOf(event);
         String message = String.join(delimiter, pID, hr, event_string);
