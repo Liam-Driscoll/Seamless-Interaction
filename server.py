@@ -2,6 +2,7 @@ import asyncio
 from re import L
 import websockets
 import updatedClosedLoopAlgorithm
+import csv
 
 connected = set()
 
@@ -15,7 +16,7 @@ async def hello(websocket):
                 #print(f"Terminated")
                 break
 
-            if "Participant" in data:
+            if "articipant" in data:
                 global participant
                 global watch_data
                 global sensor_data
@@ -57,16 +58,24 @@ async def hello(websocket):
 
 def createFile(participant):
     try:
-        file = open(participant+".txt", "x")
+        file = open(participant+".csv", "x")
+        with open(participant+'.csv', 'a', newline='') as csv_file:
+            fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "pattern_duration", "participant_id", "heart_rate", "event_number"]
+            csv_writer = csv.writer(csv_file, delimiter=',')
+            csv_writer.writerow(fieldnames)
     except (FileExistsError):
         print("HR file exists")
 
 def writeData(sensor, watch):
-    file = open(participant+".txt", "a")
-    file.write(sensor+","+watch+"\n")
+    str_data = sensor+","+watch
+    data = str_data.split(",")
+    print(data)
+    with open(participant+'.csv', 'a', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file, delimiter=',')
+        csv_writer.writerow(data)
 
 async def main():
-    async with websockets.serve(hello, "142.231.70.68", 8765):
+    async with websockets.serve(hello, "206.87.9.22", 8765):
         await asyncio.Future()  # run forever
 
 if __name__ == "__main__":

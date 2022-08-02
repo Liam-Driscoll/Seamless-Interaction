@@ -40,7 +40,7 @@ run = True
 async def send_data():
     #uri = "ws://localhost:8765"
     #uri = "ws://172.20.10.4:8765" #hotspot
-    uri = "ws://142.231.70.68:8765" #ubcsecure
+    uri = "ws://206.87.9.22:8765" #ubcsecure
     
 
     async with websockets.connect(uri) as websocket:
