@@ -73,10 +73,9 @@ public class MainActivity2 extends AppCompatActivity {
     String participantID_message;
 
     // list of events/windows/pages in the order they will be displayed
-    // 0 is a filler event (doesn't exist) to facilitate proper indexing functionality
-    String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR", "Completed Baseline HR","NASA-TLX Survey","Begin Trial",
-            "SAM Survey","Prepare Exercise","Perform Exercise","Completed Exercise", "SAM Survey","Prepare Breathing Guidance",
-            "Perform Breathing Guidance", "Completed Breathing Guidance", "SAM Survey","Completed Trial","Study Complete"};
+    String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR","Completed Baseline HR","NASA-TLX Survey","Begin Trial",
+            "SAM Survey","Prepare Exercise","Perform Exercise","Completed Exercise","SAM Survey","Prepare Breathing Guidance",
+            "Perform Breathing Guidance","Completed Breathing Guidance","SAM Survey","Completed Trial","Study Complete"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -349,7 +348,7 @@ public class MainActivity2 extends AppCompatActivity {
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     notificationVibrate();
                     baselineHR = (int) (baselineSum / baselineCount);
-                    Log.d("baseline", String.valueOf(baselineHR));
+                    Log.d("hrBaseline", String.valueOf(baselineHR));
                     eventNumber++;
                     changeEvent(events[eventNumber]);
                 }
@@ -364,6 +363,10 @@ public class MainActivity2 extends AppCompatActivity {
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     resetVibration();
 
+                }
+                else if (events[eventNumber] == "Measure Baseline HR"){
+                    baselineHR = (int) (baselineSum / baselineCount);
+                    Log.d("hrBaseline", String.valueOf(baselineHR));
                 }
                 countDownTimer.cancel();
                 eventNumber--;
@@ -380,6 +383,10 @@ public class MainActivity2 extends AppCompatActivity {
                     // resets the vibration guidance pattern
                     resetVibration();
 
+                }
+                else if (events[eventNumber] == "Measure Baseline HR"){
+                    baselineHR = (int) (baselineSum / baselineCount);
+                    Log.d("hrBaseline", String.valueOf(baselineHR));
                 }
                 countDownTimer.cancel();
                 eventNumber++;
