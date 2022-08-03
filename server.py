@@ -16,14 +16,14 @@ async def hello(websocket):
                 #print(f"Terminated")
                 break
 
-            if "articipant" in data:
+            if "Participant" in data:
                 global participant
                 global watch_data
                 global sensor_data
                 participant = data
                 createFile(data)
             try:
-                if "P" in data:
+                if "P" in data and "Participant" not in data:
                     watch_data = data
                     if watch_data is not None and sensor_data is not None:
                         writeData(sensor_data,watch_data)
@@ -60,7 +60,7 @@ def createFile(participant):
     try:
         file = open(participant+".csv", "x")
         with open(participant+'.csv', 'a', newline='') as csv_file:
-            fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "pattern_duration", "participant_id", "heart_rate", "event_number"]
+            fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "pattern_duration", "participant_id", "heart_rate", "trial number", "guidance type", "event_number"]
             csv_writer = csv.writer(csv_file, delimiter=',')
             csv_writer.writerow(fieldnames)
     except (FileExistsError):
