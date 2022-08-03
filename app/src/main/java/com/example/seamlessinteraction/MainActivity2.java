@@ -35,18 +35,23 @@ public class MainActivity2 extends AppCompatActivity {
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
 
-    int goalInhale = 6000;
-    int goalPulseDelay = 905;
-    int inhale = 2000;
-    int pulse = 100;
-    int pulseDelay = (inhale-pulse*6)/6;
-    int inhaleStep = (goalInhale-inhale)/8;
-    int pulseDelayStep = (goalPulseDelay-pulseDelay)/8;
+    int initial = 2000;
+    int goal = 6000;
+    int pulse = 30;
+    int pulseDelay = 300;
+    int goalInhaleIntervalDelay = goal - 2 * pulse + pulseDelay;
+    int goalExhaleIntervalDelay = goal - 3 * pulse + pulseDelay;
+    int initialInhaleIntervalDelay = initial - (2 * pulse + pulseDelay);
+    int initialExhaleIntervalDelay = initial - (3 * pulse + pulseDelay);
+    int inhaleIntervalDelay = initialInhaleIntervalDelay;
+    int exhaleIntervalDelay = initialExhaleIntervalDelay;
+    int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/8;
+    int exhaleStep = (goalExhaleIntervalDelay-exhaleIntervalDelay)/8;
 
     // vibration pattern layout:
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
-    long [] goalVibrationPattern = {100, goalInhale, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, pulse, goalPulseDelay, 0, pulse};
-    long[] vibrationPattern = {100, inhale, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, 0, pulse};
+    long [] goalVibrationPattern = {0, pulse, pulseDelay, pulse, pulseDelay, 0, goalInhaleIntervalDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, 0, goalExhaleIntervalDelay};
+    long[] vibrationPattern = {0, pulse, pulseDelay, pulse, inhaleIntervalDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, exhaleIntervalDelay};
     long [] notificationVibrationPattern = {0, 1000};
 
     private SensorManager mSensorManager;
@@ -67,7 +72,7 @@ public class MainActivity2 extends AppCompatActivity {
     double targetHR = 0.5; // target HR is a fraction of the maximum HR
     int baselineCount = 0;
     double baselineSum = 0;
-    int baselineHR;
+    int baselineHR = 0;
 
     String participantID_string;
     String participantID_message;
@@ -273,7 +278,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Breathing Guidance " + type);
-                resetVibration();
+                resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
                 guidanceVibrate(0);
                 break;
             case "Completed Breathing Guidance":
@@ -361,7 +366,7 @@ public class MainActivity2 extends AppCompatActivity {
                 if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern if closed loop guidance is being given
-                    resetVibration();
+                    resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
 
                 }
                 else if (events[eventNumber] == "Measure Baseline HR"){
@@ -381,7 +386,7 @@ public class MainActivity2 extends AppCompatActivity {
                 if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern
-                    resetVibration();
+                    resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
 
                 }
                 else if (events[eventNumber] == "Measure Baseline HR"){
@@ -429,7 +434,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
 
             Log.d("hr",heart_rate);
-            createMessage(participantID_message, heart_rate, events[eventNumber]);
+            createMessage(participantID_message, heart_rate, events[eventNumber], trialString, type);
         }
 
         @Override
@@ -515,10 +520,10 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    public void createMessage(String pID, String hr, String event){
+    public void createMessage(String pID, String hr, String event, String trial, String guidanceType){
         String delimiter = ",";
         String event_string = String.valueOf(event);
-        String message = String.join(delimiter, pID, hr, event_string);
+        String message = String.join(delimiter, pID, hr, trial, guidanceType, event_string);
         sendMessage(message);
         Log.d("createMessage", "Created message: " + message);
     }
@@ -528,15 +533,13 @@ public class MainActivity2 extends AppCompatActivity {
         // prevents vibration pattern from increasing beyond goal pattern
         if (openLoopVibrationTime < goalVibrationTime) {
             for (int i=0; i<vibrationPattern.length; i++){
-                if (vibrationPattern[i] == inhale){
+                if (vibrationPattern[i] == inhaleIntervalDelay){
                     vibrationPattern[i] += inhaleStep;
                 }
-                else if (vibrationPattern[i] == pulseDelay){
-                    vibrationPattern[i] += pulseDelayStep;
+                else if (vibrationPattern[i] == exhaleIntervalDelay){
+                    vibrationPattern[i] += exhaleStep;
                 }
             }
-            inhale += inhaleStep;
-            pulseDelay += pulseDelayStep;
         }
         guidanceVibrate(0);
 
@@ -637,10 +640,11 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     public void relaxedHR(){
-        if (currentHR <= maxHR*0.45){
+        if (currentHR < baselineHR){
             guidanceVibrate(1);
+            Log.d("why", "relaxedHR is running...");
             notificationVibrate();  // provides a vibration notification that the timer is finished
-            resetVibration();
+            resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
             eventNumber++;
             changeEvent(events[eventNumber]);
         }
@@ -654,23 +658,20 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     // resets vibration pattern if guidance is over or interrupted (i.e. back, skip buttons pressed)
-    public void resetVibration(){
-        int inhaleReset = 2000;
-        int pulseDelayReset = 233;
-
+    public void resetVibration(int inhaleReset, int exhaleReset){
         for (int i=0; i<vibrationPattern.length; i++){
-            if (vibrationPattern[i] == inhale){
+            if (vibrationPattern[i] == inhaleIntervalDelay){
                 vibrationPattern[i] = inhaleReset;
             }
-            else if (vibrationPattern[i] == pulseDelay){
-                vibrationPattern[i] = pulseDelayReset;
+            else if (vibrationPattern[i] == exhaleIntervalDelay){
+                vibrationPattern[i] = exhaleReset;
             }
         }
-        inhale = inhaleReset;
-        pulseDelay = pulseDelayReset;
+        inhaleIntervalDelay = inhaleReset;
+        exhaleIntervalDelay = exhaleReset;
 
         int length = vibrationPattern.length;
-        Log.i("pattern", "Pattern Reset To:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
+        Log.i("pattern", "Pattern Reset To:  Inhale - " + vibrationPattern[4] + "   Exhale - " + vibrationPattern[10]);
         String reset = "reset";
         sendMessage(reset);
     }
