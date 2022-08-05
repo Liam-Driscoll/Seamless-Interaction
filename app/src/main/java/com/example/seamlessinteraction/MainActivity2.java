@@ -62,16 +62,18 @@ public class MainActivity2 extends AppCompatActivity {
     int trialTotal = 1;
     String trialString = String.valueOf(trial);
 
-    long openLoopVibrationTime = 0;
+    long vibrationTime = 0;
 
     // Based on even/odd participant ID
     String type = null;
     double currentHR = 0;
     int maxHR = 0;
-    double targetHR = 0.5; // target HR is a fraction of the maximum HR
+    double targetZoneHR = 0.5; // target HR is a fraction of the maximum HR
     int baselineCount = 0;
     double baselineSum = 0;
     int baselineHR = 0;
+
+    boolean[] patternComplete = {false};
 
     String participantID_string;
     String participantID_message;
@@ -341,9 +343,17 @@ public class MainActivity2 extends AppCompatActivity {
 
             @Override
             public void onFinish() {
+                Log.d("onFinish", "pattern complete: " + patternComplete[0]);
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
-                if (events[eventNumber] == "Perform Breathing Guidance") {
+                if (events[eventNumber] == "Perform Breathing Guidance" && type == "Y") {
                     changePattern();
+                }
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0]){
+                    changePattern();
+                    patternComplete[0] = false;
+                }
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] == false){
+                    timer(vibrationTime);
                 }
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     notificationVibrate();
@@ -508,10 +518,10 @@ public class MainActivity2 extends AppCompatActivity {
 
     // changes vibration guidance pattern when completion message is received
     public void receiveMessage(String msg){
-        Log.i("Websocket", "MESSAGE RECEIVED: " + msg);
+        Log.i("onFinish", "MESSAGE RECEIVED: " + msg);
         // only changes pattern if the guidance is closed-loop (feedback)
         if (type == "X" && events[eventNumber] == "Perform Breathing Guidance"){
-            changePattern();
+            patternComplete[0] = true;
         }
     }
 
@@ -553,17 +563,13 @@ public class MainActivity2 extends AppCompatActivity {
         }
         else {
             final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
-            if (type == "X") {
-                vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
+
+            vibrationTime = 0;
+            for (int i=0; i<vibrationPattern.length; i++){
+                vibrationTime += vibrationPattern[i];
             }
-            else{
-                openLoopVibrationTime = 0;
-                for (int i=0; i<vibrationPattern.length; i++){
-                    openLoopVibrationTime += vibrationPattern[i];
-                }
-                timer(openLoopVibrationTime);  // changes open loop pattern once the current pattern has finished (based on timer), so that open loop increases continually
-                vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
-            }
+            timer(vibrationTime);  // changes open loop pattern once the current pattern has finished (based on timer), so that open loop increases continually
+            vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
         }
     }
 
@@ -629,7 +635,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     public void elevatedHR(){
-        if (currentHR >= maxHR*targetHR){
+        if (currentHR >= maxHR*targetZoneHR){
             guidanceVibrate(1);
             notificationVibrate();   // provides a vibration notification that the timer is finished
             eventNumber++;
@@ -638,7 +644,7 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     public void relaxedHR(){
-        if (currentHR < baselineHR-200){
+        if (currentHR < baselineHR*1.05){
             guidanceVibrate(1);
             notificationVibrate();  // provides a vibration notification that the timer is finished
             resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
