@@ -39,10 +39,10 @@ public class MainActivity2 extends AppCompatActivity {
     int goal = 6000;
     int pulse = 30;
     int pulseDelay = 300;
-    int goalInhaleIntervalDelay = goal - 2 * pulse + pulseDelay;
-    int goalExhaleIntervalDelay = goal - 3 * pulse + pulseDelay;
+    int goalInhaleIntervalDelay = goal - (2 * pulse + pulseDelay);
+    int goalExhaleIntervalDelay = goal - (3 * pulse + 2 * pulseDelay);
     int initialInhaleIntervalDelay = initial - (2 * pulse + pulseDelay);
-    int initialExhaleIntervalDelay = initial - (3 * pulse + pulseDelay);
+    int initialExhaleIntervalDelay = initial - (3 * pulse + 2 * pulseDelay);
     int inhaleIntervalDelay = initialInhaleIntervalDelay;
     int exhaleIntervalDelay = initialExhaleIntervalDelay;
     int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/8;
@@ -63,7 +63,6 @@ public class MainActivity2 extends AppCompatActivity {
     String trialString = String.valueOf(trial);
 
     long openLoopVibrationTime = 0;
-    long goalVibrationTime = 0;
 
     // Based on even/odd participant ID
     String type = null;
@@ -99,10 +98,6 @@ public class MainActivity2 extends AppCompatActivity {
         mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
         mSensor = mSensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         Log.d("buttonCount", String.valueOf(events.length-1));
-
-        for (int i=0; i<goalVibrationPattern.length; i++){
-            goalVibrationTime += goalVibrationPattern[i];
-        }
 
         // goes forward an event/window
         nextButton.setOnClickListener(new View.OnClickListener() {
@@ -531,20 +526,23 @@ public class MainActivity2 extends AppCompatActivity {
     // changes vibration pattern
     public void changePattern(){
         // prevents vibration pattern from increasing beyond goal pattern
-        if (openLoopVibrationTime < goalVibrationTime) {
+        if (inhaleIntervalDelay < goalInhaleIntervalDelay) {
             for (int i=0; i<vibrationPattern.length; i++){
                 if (vibrationPattern[i] == inhaleIntervalDelay){
                     vibrationPattern[i] += inhaleStep;
+                    inhaleIntervalDelay = (int) vibrationPattern[i];
                 }
                 else if (vibrationPattern[i] == exhaleIntervalDelay){
                     vibrationPattern[i] += exhaleStep;
+                    exhaleIntervalDelay = (int) vibrationPattern[i];
+
                 }
             }
         }
         guidanceVibrate(0);
 
         int length = vibrationPattern.length;
-        Log.i("pattern", "Pattern changed to:  Inhale - " + vibrationPattern[1] + "   Pulse Delay - " + vibrationPattern[2]);
+        Log.i("pattern", "Pattern changed to:  Inhale Interval Delay - " + vibrationPattern[4] + "   Exhale Interval Delay - " + vibrationPattern[10]);
     }
 
     // plays vibration pattern based on type of guidance (open/Y or closed/X)
@@ -563,7 +561,7 @@ public class MainActivity2 extends AppCompatActivity {
                 for (int i=0; i<vibrationPattern.length; i++){
                     openLoopVibrationTime += vibrationPattern[i];
                 }
-                timer(openLoopVibrationTime);
+                timer(openLoopVibrationTime);  // changes open loop pattern once the current pattern has finished (based on timer), so that open loop increases continually
                 vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
             }
         }
@@ -640,9 +638,8 @@ public class MainActivity2 extends AppCompatActivity {
     }
 
     public void relaxedHR(){
-        if (currentHR < baselineHR){
+        if (currentHR < baselineHR-200){
             guidanceVibrate(1);
-            Log.d("why", "relaxedHR is running...");
             notificationVibrate();  // provides a vibration notification that the timer is finished
             resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
             eventNumber++;
