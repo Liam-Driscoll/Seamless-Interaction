@@ -74,7 +74,9 @@ def completionCheck():
 # calculates number of measurements in each time interval
     times = []
     for time in pattern:
-        times.append(time/time_between_measurements)
+        # -200 adds a buffer so that patterns can be completed by following vibration
+        # before you would have to extend inhales/exhales to complete pattern
+        times.append((time-200)/time_between_measurements)
 
 # loops through each time interval and the number of measurements recorded in the current interval
     for i in range(len(times)):
