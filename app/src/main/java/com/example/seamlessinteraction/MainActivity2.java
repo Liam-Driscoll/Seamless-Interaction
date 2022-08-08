@@ -72,6 +72,7 @@ public class MainActivity2 extends AppCompatActivity {
     int baselineCount = 0;
     double baselineSum = 0;
     int baselineHR = 0;
+    String baselineHR_message;
 
     boolean[] patternComplete = {false};
 
@@ -356,9 +357,11 @@ public class MainActivity2 extends AppCompatActivity {
                 else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] == false){
                     timer(vibrationTime);
                 }
+                // calculates baseline heart rate once the measurement period is finished
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     notificationVibrate();
                     baselineHR = (int) (baselineSum / baselineCount);
+                    baselineHR_message = String.valueOf(baselineHR);
                     Log.d("hrBaseline", String.valueOf(baselineHR));
                     eventNumber++;
                     changeEvent(events[eventNumber]);
@@ -374,10 +377,6 @@ public class MainActivity2 extends AppCompatActivity {
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
 
-                }
-                else if (events[eventNumber] == "Measure Baseline HR"){
-                    baselineHR = (int) (baselineSum / baselineCount);
-                    Log.d("hrBaseline", String.valueOf(baselineHR));
                 }
                 countDownTimer.cancel();
                 eventNumber--;
@@ -395,8 +394,10 @@ public class MainActivity2 extends AppCompatActivity {
                     resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
 
                 }
+                // still calculates baseline heart rate if the measurement period is skipped prematurely
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     baselineHR = (int) (baselineSum / baselineCount);
+                    baselineHR_message = String.valueOf(baselineHR);
                     Log.d("hrBaseline", String.valueOf(baselineHR));
                 }
                 countDownTimer.cancel();
@@ -440,7 +441,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
 
             Log.d("hr",heart_rate);
-            createMessage(participantID_message, heart_rate, events[eventNumber], trialString, type);
+            createMessage(participantID_message, heart_rate, baselineHR_message, events[eventNumber], trialString, type);
         }
 
         @Override
@@ -526,10 +527,10 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    public void createMessage(String pID, String hr, String event, String trial, String guidanceType){
+    public void createMessage(String pID, String hr, String baselineHR, String event, String trial, String guidanceType){
         String delimiter = ",";
         String event_string = String.valueOf(event);
-        String message = String.join(delimiter, pID, hr, trial, guidanceType, event_string);
+        String message = String.join(delimiter, pID, hr, baselineHR, trial, guidanceType, event_string);
         sendMessage(message);
         Log.d("createMessage", "Created message: " + message);
     }
