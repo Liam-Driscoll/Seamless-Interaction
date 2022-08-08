@@ -267,6 +267,7 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Prepare for Breathing Guidance " + type);
                 nextButton.setText("Start");
+                resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
                 break;
             case "Perform Breathing Guidance":
                 timerText.setVisibility(View.GONE);
