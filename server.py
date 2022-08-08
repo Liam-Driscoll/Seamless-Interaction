@@ -60,7 +60,7 @@ def createFile(participant):
     try:
         file = open(participant+".csv", "x")
         with open(participant+'.csv', 'a', newline='') as csv_file:
-            fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "pattern_duration", "participant_id", "heart_rate", "trial number", "guidance type", "event_number"]
+            fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "pattern_duration", "participant_id", "heart_rate", "baseline_hr", "trial_number", "guidance_type", "event_number"]
             csv_writer = csv.writer(csv_file, delimiter=',')
             csv_writer.writerow(fieldnames)
     except (FileExistsError):
