@@ -73,6 +73,7 @@ public class MainActivity2 extends AppCompatActivity {
     double baselineSum = 0;
     int baselineHR = 0;
     String baselineHR_message;
+    String patternDuration;
 
     boolean[] patternComplete = {false};
 
@@ -441,7 +442,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
 
             Log.d("hr",heart_rate);
-            createMessage(participantID_message, heart_rate, baselineHR_message, events[eventNumber], trialString, type);
+            createMessage(participantID_message, heart_rate, baselineHR_message, patternDuration, events[eventNumber], trialString, type);
         }
 
         @Override
@@ -527,10 +528,10 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    public void createMessage(String pID, String hr, String baselineHR, String event, String trial, String guidanceType){
+    public void createMessage(String pID, String hr, String baselineHR, String patternDuration, String event, String trial, String guidanceType){
         String delimiter = ",";
         String event_string = String.valueOf(event);
-        String message = String.join(delimiter, pID, hr, baselineHR, trial, guidanceType, event_string);
+        String message = String.join(delimiter, pID, hr, baselineHR, patternDuration, trial, guidanceType, event_string);
         sendMessage(message);
         Log.d("createMessage", "Created message: " + message);
     }
@@ -551,6 +552,7 @@ public class MainActivity2 extends AppCompatActivity {
                 }
             }
         }
+        patternDuration = String.valueOf(inhaleIntervalDelay+2*pulse+pulseDelay);
         guidanceVibrate(0);
 
         int length = vibrationPattern.length;
@@ -677,6 +679,7 @@ public class MainActivity2 extends AppCompatActivity {
 
         int length = vibrationPattern.length;
         Log.i("pattern", "Pattern Reset To:  Inhale - " + vibrationPattern[4] + "   Exhale - " + vibrationPattern[10]);
+        patternDuration = String.valueOf(inhaleIntervalDelay+2*pulse+pulseDelay);
         String reset = "reset";
         sendMessage(reset);
     }
