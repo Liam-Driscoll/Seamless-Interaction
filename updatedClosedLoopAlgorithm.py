@@ -62,7 +62,7 @@ def sensor():
    
     completionResult = completionCheck()
     comma = ","
-    message = [date, str(completionResult), breathAction, str(force), str(respiration_rate), str(pattern[0])]
+    message = [date, str(completionResult), breathAction, str(force), str(respiration_rate)]
     results = comma.join(message)
     #print(completionResult, data)
     return completionResult, results
@@ -74,9 +74,9 @@ def completionCheck():
 # calculates number of measurements in each time interval
     times = []
     for time in pattern:
-        # -200 adds a buffer so that patterns can be completed by following vibration
+        # -100 adds a buffer so that patterns can be completed by following vibration
         # before you would have to extend inhales/exhales to complete pattern
-        times.append((time-200)/time_between_measurements)
+        times.append((time-100)/time_between_measurements)
 
 # loops through each time interval and the number of measurements recorded in the current interval
     for i in range(len(times)):
