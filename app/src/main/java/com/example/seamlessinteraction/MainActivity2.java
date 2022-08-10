@@ -77,6 +77,7 @@ public class MainActivity2 extends AppCompatActivity {
     String patternDuration;
 
     boolean[] patternComplete = {false};
+    boolean[] heartRateComplete = {false};
 
     String participantID_string;
     String participantID_message;
@@ -252,6 +253,7 @@ public class MainActivity2 extends AppCompatActivity {
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
                 textView.setText("Perform High Knees");
+                timer(180000);
                 break;
             case "Completed Exercise":
                 timerText.setVisibility(View.GONE);
@@ -281,6 +283,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Breathing Guidance " + type);
                 resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
                 guidanceVibrate(0);
+                timer(300000);
                 break;
             case "Completed Breathing Guidance":
                 timerText.setVisibility(View.GONE);
@@ -352,6 +355,11 @@ public class MainActivity2 extends AppCompatActivity {
                         , TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)));
                 timerText.setText(sDuration);
+
+                if (heartRateComplete[0] == true){
+                    cancel();
+                    heartRateComplete[0] = false;
+                }
             }
 
             @Override
@@ -374,6 +382,12 @@ public class MainActivity2 extends AppCompatActivity {
                     baselineHR = (int) (baselineSum / baselineCount);
                     baselineHR_message = String.valueOf(baselineHR);
                     Log.d("hrBaseline", String.valueOf(baselineHR));
+                    eventNumber++;
+                    changeEvent(events[eventNumber]);
+                }
+                else if (events[eventNumber] == "Perform Breathing Guidance" || events[eventNumber] == "Perform Exercise"){
+                    cancel();
+                    notificationVibrate();
                     eventNumber++;
                     changeEvent(events[eventNumber]);
                 }
@@ -650,6 +664,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void elevatedHR(){
         if (currentHR >= maxHR*targetZoneHR){
+            heartRateComplete[0] = true;
             guidanceVibrate(1);
             notificationVibrate();   // provides a vibration notification that the timer is finished
             eventNumber++;
@@ -659,6 +674,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void relaxedHR(){
         if (currentHR < baselineHR*1.05){
+            heartRateComplete[0] = true;
             guidanceVibrate(1);
             notificationVibrate();  // provides a vibration notification that the timer is finished
             resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
