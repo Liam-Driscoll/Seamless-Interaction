@@ -141,7 +141,7 @@ def changePattern():
     global pattern, startingPattern
     if (pattern[0] < goalPattern[0]):
         for i in range(len(pattern)):
-            pattern[i] += 500
+            pattern[i] += 250
     print(pattern)
 
 def resetPattern():
