@@ -35,18 +35,19 @@ public class MainActivity2 extends AppCompatActivity {
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
 
-    int initial = 2000;
+    int initial = 1500;
     int goal = 6000;
     int pulse = 30;
     int pulseDelay = 300;
+    int steps = 16;
     int goalInhaleIntervalDelay = goal - (2 * pulse + pulseDelay);
     int goalExhaleIntervalDelay = goal - (3 * pulse + 2 * pulseDelay);
     int initialInhaleIntervalDelay = initial - (2 * pulse + pulseDelay);
     int initialExhaleIntervalDelay = initial - (3 * pulse + 2 * pulseDelay);
     int inhaleIntervalDelay = initialInhaleIntervalDelay;
     int exhaleIntervalDelay = initialExhaleIntervalDelay;
-    int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/8;
-    int exhaleStep = (goalExhaleIntervalDelay-exhaleIntervalDelay)/8;
+    int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/steps;
+    int exhaleStep = (goalExhaleIntervalDelay-exhaleIntervalDelay)/steps;
 
     // vibration pattern layout:
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
@@ -83,7 +84,7 @@ public class MainActivity2 extends AppCompatActivity {
     // list of events/windows/pages in the order they will be displayed
     String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR","Completed Baseline HR","NASA-TLX Survey","Begin Trial",
             "SAM Survey","Prepare Exercise","Perform Exercise","Completed Exercise","SAM Survey","Prepare Breathing Guidance",
-            "Perform Breathing Guidance","Completed Breathing Guidance","SAM Survey","Completed Trial","Study Complete"};
+            "Perform Breathing Guidance","Completed Breathing Guidance","SAM Survey","Completed Trial", "Post Study Questionnaire", "Study Complete"};
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +109,7 @@ public class MainActivity2 extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 // prevents "index out of bounds" error
-                if (eventNumber == events.length-2){
+                if (eventNumber == events.length-3){
                     if (trial == 3){
                         Log.d("trial", "1");
                         eventNumber = 4;
@@ -126,7 +127,7 @@ public class MainActivity2 extends AppCompatActivity {
                     }
                 }
                 else if (trialTotal >= 6 && eventNumber == 4){
-                    eventNumber = events.length-1;
+                    eventNumber = events.length-2;  // second last event
                 }
                 else if (eventNumber == 3){
                     eventNumber += 2;
@@ -220,7 +221,7 @@ public class MainActivity2 extends AppCompatActivity {
             case "NASA-TLX Survey":
                 timerText.setVisibility(View.GONE);
                 nextButton.setVisibility(View.VISIBLE);
-                backButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.GONE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Complete the NASA-TLX Survey");
@@ -307,6 +308,15 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Trial " + trialString);
                 nextButton.setText("Begin");
+                break;
+            case "Post Study Questionnaire":
+                timerText.setVisibility(View.GONE);
+                nextButton.setVisibility(View.VISIBLE);
+                backButton.setVisibility(View.GONE);
+                skipButton.setVisibility(View.GONE);
+                cancelButton.setVisibility(View.GONE);
+                textView.setText("Complete the Post Study Questionnaire");
+                nextButton.setText("Done");
                 break;
             case "Study Complete":
                 timerText.setVisibility(View.GONE);
