@@ -35,7 +35,7 @@ public class MainActivity2 extends AppCompatActivity {
     public static final String PORT = "8765";
     private WebSocketClient mWebSocketClient;
 
-    int initial = 1500;
+    int initial = 2000;
     int goal = 6000;
     int pulse = 30;
     int pulseDelay = 300;
@@ -78,6 +78,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     boolean[] patternComplete = {false};
     boolean[] heartRateComplete = {false};
+    boolean[] maxTimerComplete = {false};
 
     String participantID_string;
     String participantID_message;
@@ -360,20 +361,24 @@ public class MainActivity2 extends AppCompatActivity {
                     cancel();
                     heartRateComplete[0] = false;
                 }
+                else if (maxTimerComplete[0] == true){
+                    cancel();
+                    maxTimerComplete[0] = false;
+                }
             }
 
             @Override
             public void onFinish() {
                 Log.d("onFinish", "pattern complete: " + patternComplete[0]);
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
-                if (events[eventNumber] == "Perform Breathing Guidance" && type == "Y") {
+                if ((events[eventNumber] == "Perform Breathing Guidance" && type == "Y") && duration < 15000) {
                     changePattern();
                 }
-                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0]){
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] && duration < 15000){
                     changePattern();
                     patternComplete[0] = false;
                 }
-                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] == false){
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] == false && duration < 15000){
                     timer(vibrationTime);
                 }
                 // calculates baseline heart rate once the measurement period is finished
@@ -385,9 +390,11 @@ public class MainActivity2 extends AppCompatActivity {
                     eventNumber++;
                     changeEvent(events[eventNumber]);
                 }
-                else if (events[eventNumber] == "Perform Breathing Guidance" || events[eventNumber] == "Perform Exercise"){
-                    cancel();
+                else if ((events[eventNumber] == "Perform Breathing Guidance" || events[eventNumber] == "Perform Exercise") && duration > 15000){
+                    maxTimerComplete[0] = true; // flag used to cancel other timer
+                    guidanceVibrate(1);
                     notificationVibrate();
+                    resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
                     eventNumber++;
                     changeEvent(events[eventNumber]);
                 }
