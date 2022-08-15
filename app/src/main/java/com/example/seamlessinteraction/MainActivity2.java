@@ -55,6 +55,7 @@ public class MainActivity2 extends AppCompatActivity {
     long[] vibrationPattern = {0, pulse, pulseDelay, pulse, inhaleIntervalDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, exhaleIntervalDelay};
     long [] notificationVibrationPattern = {0, 1000};
 
+
     private SensorManager mSensorManager;
     private Sensor mSensor;
 
@@ -75,10 +76,11 @@ public class MainActivity2 extends AppCompatActivity {
     int baselineHR = 0;
     String baselineHR_message;
     String patternDuration;
+    int failCount = 0;
 
-    boolean[] patternComplete = {false};
-    boolean[] heartRateComplete = {false};
-    boolean[] maxTimerComplete = {false};
+    boolean patternComplete = false;
+    boolean heartRateComplete = false;
+    boolean maxTimerComplete = false;
 
     String participantID_string;
     String participantID_message;
@@ -357,29 +359,37 @@ public class MainActivity2 extends AppCompatActivity {
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)));
                 timerText.setText(sDuration);
 
-                if (heartRateComplete[0] == true){
+                if (heartRateComplete == true){
                     cancel();
-                    heartRateComplete[0] = false;
+                    heartRateComplete = false;
                 }
-                else if (maxTimerComplete[0] == true){
+                else if (maxTimerComplete == true){
                     cancel();
-                    maxTimerComplete[0] = false;
+                    maxTimerComplete = false;
                 }
             }
 
             @Override
             public void onFinish() {
-                Log.d("onFinish", "pattern complete: " + patternComplete[0]);
+                Log.d("onFinish", "pattern complete: " + patternComplete);
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
-                if ((events[eventNumber] == "Perform Breathing Guidance" && type == "Y") && duration < 15000) {
+                if (events[eventNumber] == "Perform Breathing Guidance" && type == "Y" && duration < 15000) {
                     changePattern();
                 }
-                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] && duration < 15000){
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete && duration < 15000){
                     changePattern();
-                    patternComplete[0] = false;
+                    patternComplete = false;
                 }
-                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete[0] == false && duration < 15000){
-                    timer(vibrationTime);
+                else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete == false && duration < 15000){
+                    failCount += 1;
+                    Log.d("failCount", "The failCount is: " + failCount);
+                    if (failCount >= 2) {
+                        decreaseVibration();
+                        failCount = 0;
+                    }
+                    else{
+                        timer(vibrationTime);
+                    }
                 }
                 // calculates baseline heart rate once the measurement period is finished
                 else if (events[eventNumber] == "Measure Baseline HR"){
@@ -391,7 +401,7 @@ public class MainActivity2 extends AppCompatActivity {
                     changeEvent(events[eventNumber]);
                 }
                 else if ((events[eventNumber] == "Perform Breathing Guidance" || events[eventNumber] == "Perform Exercise") && duration > 15000){
-                    maxTimerComplete[0] = true; // flag used to cancel other timer
+                    maxTimerComplete = true; // flag used to cancel other timer
                     guidanceVibrate(1);
                     notificationVibrate();
                     resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
@@ -555,7 +565,8 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i("onFinish", "MESSAGE RECEIVED: " + msg);
         // only changes pattern if the guidance is closed-loop (feedback)
         if (type == "X" && events[eventNumber] == "Perform Breathing Guidance"){
-            patternComplete[0] = true;
+            patternComplete = true;
+            failCount = 0;
         }
     }
 
@@ -671,7 +682,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void elevatedHR(){
         if (currentHR >= maxHR*targetZoneHR){
-            heartRateComplete[0] = true;
+            heartRateComplete = true;
             guidanceVibrate(1);
             notificationVibrate();   // provides a vibration notification that the timer is finished
             eventNumber++;
@@ -681,7 +692,7 @@ public class MainActivity2 extends AppCompatActivity {
 
     public void relaxedHR(){
         if (currentHR < baselineHR*1.05){
-            heartRateComplete[0] = true;
+            heartRateComplete = true;
             guidanceVibrate(1);
             notificationVibrate();  // provides a vibration notification that the timer is finished
             resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
@@ -715,6 +726,30 @@ public class MainActivity2 extends AppCompatActivity {
         patternDuration = String.valueOf(inhaleIntervalDelay+2*pulse+pulseDelay);
         String reset = "reset";
         sendMessage(reset);
+    }
+
+    public void decreaseVibration(){
+        // prevents vibration pattern from decreasing below starting pattern
+        if (inhaleIntervalDelay > initialInhaleIntervalDelay) {
+            for (int i=0; i<vibrationPattern.length; i++){
+                if (vibrationPattern[i] == inhaleIntervalDelay){
+                    vibrationPattern[i] -= inhaleStep;
+                    inhaleIntervalDelay = (int) vibrationPattern[i];
+                }
+                else if (vibrationPattern[i] == exhaleIntervalDelay){
+                    vibrationPattern[i] -= exhaleStep;
+                    exhaleIntervalDelay = (int) vibrationPattern[i];
+
+                }
+            }
+        }
+        patternDuration = String.valueOf(inhaleIntervalDelay+2*pulse+pulseDelay);
+        guidanceVibrate(0);
+
+        int length = vibrationPattern.length;
+        Log.d("failCount", "Pattern decreased to:  Inhale Interval Delay - " + vibrationPattern[4] + "   Exhale Interval Delay - " + vibrationPattern[10]);
+        String decrease = "decrease";
+        sendMessage(decrease);
     }
 
 }
