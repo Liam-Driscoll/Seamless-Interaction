@@ -36,15 +36,19 @@ async def hello(websocket):
                     print("Pattern is being reset...")
                     try:
                         f = open("reset.txt", 'w')
-                        f.write("reset")
+                        f.write(data)
+                    except Exception as e:
+                        print(e)
+                if "decrease" in data:
+                    print("Pattern is being decreased...")
+                    try:
+                        f = open("decrease.txt", 'w')
+                        f.write(data)
                     except Exception as e:
                         print(e)
             except:
                 pass
 
-            #print(f"< {data}")
-
-            #await websocket.send(greeting)
             for connection in connected:
                 # only sends data to other clients (doesn't send to itself)
                 if connection != websocket:
@@ -52,7 +56,7 @@ async def hello(websocket):
                     if  data == "1":
                         print("Pattern complete!")
                         await connection.send(data)
-            #print(f"> {greeting}")
+
     finally:
         connected.remove(websocket)
 
@@ -81,50 +85,3 @@ async def main():
 if __name__ == "__main__":
     print("Server Opened")
     asyncio.run(main())
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-'''
-if "Participant" in data:
-                global participant
-                participant = data
-                createHRFile(data)
-                createBRFile(data)
-            try:
-                if "PDT" in data:
-                    writeHR(data)
-                if "/" in data:
-                    writeBR(data)
-            except:
-                pass
-
-async def receive_data(websocket):
-    while True:
-        data = await websocket.recv()
-        await websocket.send(data)
-        # if data is ??: append to breathing_data
-        # else append to heart_rate_data
-        print(f"<<< {data}")
-
-
-async def main():
-    async with websockets.serve(receive_data, "206.87.9.89", 8765):
-        await asyncio.Future()  # run forever
-
-if __name__ == "__main__":
-    asyncio.run(main())
-'''

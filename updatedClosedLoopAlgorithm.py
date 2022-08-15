@@ -37,6 +37,7 @@ def sensor():
     respiration_rate = round(raw_measurements[1], 2)
     list_of_measurements.append(force)
     resetPattern()
+    decreasePattern()
     slope = (list_of_measurements[-1] - list_of_measurements[-2])/(time_between_measurements/1000)
     slope_string = str(slope)
 
@@ -60,11 +61,15 @@ def sensor():
 
     actions.append(action)
    
+    # 1 if the pattern was completed, 0 if it was not completed
     completionResult = completionCheck()
+
     comma = ","
+
+    # results to be stored in the csv file
     message = [date, str(completionResult), breathAction, str(force), str(respiration_rate)]
     results = comma.join(message)
-    #print(completionResult, data)
+
     return completionResult, results
 
 def completionCheck():
@@ -76,7 +81,7 @@ def completionCheck():
     for time in pattern:
         # -100 adds a buffer so that patterns can be completed by following vibration
         # before you would have to extend inhales/exhales to complete pattern
-        times.append((time-100)/time_between_measurements)
+        times.append((time-150)/time_between_measurements)
 
 # loops through each time interval and the number of measurements recorded in the current interval
     for i in range(len(times)):
@@ -127,7 +132,7 @@ def completionCheck():
         totalCompletion = inhaleCompletion + exhaleCompletion
         if totalCompletion == 2:
             completion = 1
-            changePattern()
+            increasePattern()
         else:
             completion = 0
 
@@ -137,12 +142,28 @@ def completionCheck():
     return completion
 
 # changes the breathing pattern duration once the current pattern is completed
-def changePattern():
+def increasePattern():
     global pattern, startingPattern
     if (pattern[0] < goalPattern[0]):
         for i in range(len(pattern)):
             pattern[i] += 250
     print(pattern)
+
+def decreasePattern():
+    global pattern, startingPattern
+    file_path = "decrease.txt"
+
+    # check if size of file is 0
+    if os.stat(file_path).st_size != 0:
+        startingPattern = [2000, 2000] # time in (ms)
+        f = open(file_path, 'r+')
+        f.truncate(0) # clear file 
+
+        if (pattern[0] > startingPattern[0]):
+            for i in range(len(pattern)):
+                pattern[i] -= 250
+            print(f"PATTERN DECREASED TO: {pattern}")
+
 
 def resetPattern():
     global pattern, startingPattern
@@ -151,7 +172,7 @@ def resetPattern():
     # check if size of file is 0
     if os.stat(file_path).st_size != 0:
         startingPattern = [2000, 2000] # time in (ms)
-        f = open("reset.txt", 'r+')
+        f = open(file_path, 'r+')
         f.truncate(0) # clear file 
         pattern = startingPattern
         print(f"PATTERN RESET TO: {pattern}")
