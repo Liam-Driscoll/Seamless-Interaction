@@ -178,11 +178,5 @@ def resetPattern():
         print(f"PATTERN RESET TO: {pattern}")
 
 
-'''
-sensorSetUp()    
-for i in range(1,501):
-    sensor()
-'''
-
-#gdx.stop()
-#gdx.close() 
+#gdx.stop()  #stops sensor
+#gdx.close() #closes sensor
