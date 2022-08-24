@@ -84,6 +84,8 @@ public class MainActivity2 extends AppCompatActivity {
 
     String participantID_string;
     String participantID_message;
+    String patternInterval = "0";
+    int patternCounter = 0;
 
     // list of events/windows/pages in the order they will be displayed
     String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR","Completed Baseline HR","NASA-TLX Survey","Begin Trial",
@@ -246,7 +248,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("Prepare to Perform High Knees");
+                textView.setText("Prepare to Perform Jumping Jacks");
                 nextButton.setText("Start");
                 break;
             case "Perform Exercise":
@@ -255,7 +257,7 @@ public class MainActivity2 extends AppCompatActivity {
                 nextButton.setVisibility(View.GONE);
                 skipButton.setVisibility(View.VISIBLE);
                 cancelButton.setVisibility(View.VISIBLE);
-                textView.setText("Perform High Knees");
+                textView.setText("Perform Jumping Jacks");
                 timer(180000);
                 break;
             case "Completed Exercise":
@@ -264,7 +266,7 @@ public class MainActivity2 extends AppCompatActivity {
                 backButton.setVisibility(View.VISIBLE);
                 skipButton.setVisibility(View.GONE);
                 cancelButton.setVisibility(View.GONE);
-                textView.setText("High Knees Complete");
+                textView.setText("Jumping Jacks Complete");
                 nextButton.setText("Next");
                 break;
             case "Prepare Breathing Guidance":
@@ -276,6 +278,7 @@ public class MainActivity2 extends AppCompatActivity {
                 textView.setText("Prepare for Breathing Guidance " + type);
                 nextButton.setText("Start");
                 resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
+                failCount = 0;
                 break;
             case "Perform Breathing Guidance":
                 timerText.setVisibility(View.GONE);
@@ -296,6 +299,7 @@ public class MainActivity2 extends AppCompatActivity {
                 cancelButton.setVisibility(View.GONE);
                 textView.setText("Breathing Guidance " + type + " Complete");
                 nextButton.setText("Next");
+                failCount = 0;
                 break;
             case "Completed Trial":
                 timerText.setVisibility(View.GONE);
@@ -373,14 +377,18 @@ public class MainActivity2 extends AppCompatActivity {
             public void onFinish() {
                 Log.d("onFinish", "pattern complete: " + patternComplete);
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
+                // the 'duration < 15000' condition ensures that only the breathing guidance timers are considered
                 if (events[eventNumber] == "Perform Breathing Guidance" && type == "Y" && duration < 15000) {
                     changePattern();
+                    patternInterval();  // data column indicating that breathing pattern has started
                 }
                 else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete && duration < 15000){
                     changePattern();
+                    patternInterval();  // data column indicating that breathing pattern has started
                     patternComplete = false;
                 }
                 else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete == false && duration < 15000){
+                    patternInterval();  // data column indicating that breathing pattern has started
                     failCount += 1;
                     Log.d("failCount", "The failCount is: " + failCount);
                     if (failCount >= 2) {
@@ -483,7 +491,8 @@ public class MainActivity2 extends AppCompatActivity {
             }
 
             Log.d("hr",heart_rate);
-            createMessage(participantID_message, heart_rate, baselineHR_message, patternDuration, events[eventNumber], trialString, type);
+            Log.d("patternInterval", patternInterval);
+            createMessage(participantID_message, heart_rate, baselineHR_message, patternDuration, events[eventNumber], trialString, type, patternInterval);
         }
 
         @Override
@@ -564,16 +573,16 @@ public class MainActivity2 extends AppCompatActivity {
     public void receiveMessage(String msg){
         Log.i("onFinish", "MESSAGE RECEIVED: " + msg);
         // only changes pattern if the guidance is closed-loop (feedback)
-        if (type == "X" && events[eventNumber] == "Perform Breathing Guidance"){
+        if (events[eventNumber] == "Perform Breathing Guidance"){
             patternComplete = true;
             failCount = 0;
         }
     }
 
-    public void createMessage(String pID, String hr, String baselineHR, String patternDuration, String event, String trial, String guidanceType){
+    public void createMessage(String pID, String hr, String baselineHR, String patternDuration, String event, String trial, String guidanceType, String patternInterval){
         String delimiter = ",";
         String event_string = String.valueOf(event);
-        String message = String.join(delimiter, pID, hr, baselineHR, patternDuration, trial, guidanceType, event_string);
+        String message = String.join(delimiter, pID, hr, baselineHR, patternDuration, trial, guidanceType, event_string, patternInterval);
         sendMessage(message);
         Log.d("createMessage", "Created message: " + message);
     }
@@ -601,6 +610,7 @@ public class MainActivity2 extends AppCompatActivity {
         Log.i("pattern", "Pattern changed to:  Inhale Interval Delay - " + vibrationPattern[4] + "   Exhale Interval Delay - " + vibrationPattern[10]);
     }
 
+
     // plays vibration pattern based on type of guidance (open/Y or closed/X)
     public void guidanceVibrate(int stop){
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
@@ -609,7 +619,6 @@ public class MainActivity2 extends AppCompatActivity {
         }
         else {
             final int indexInPatternToRepeat = 0; //-1: don't repeat, 0: repeat
-
             vibrationTime = 0;
             for (int i=0; i<vibrationPattern.length; i++){
                 vibrationTime += vibrationPattern[i];
@@ -618,6 +627,7 @@ public class MainActivity2 extends AppCompatActivity {
             vibrator.vibrate(vibrationPattern, indexInPatternToRepeat);
         }
     }
+
 
     // determines order of guidance (open -> closed OR closed -> open) based on participant ID
     public void checkOrder(){
@@ -750,6 +760,19 @@ public class MainActivity2 extends AppCompatActivity {
         Log.d("failCount", "Pattern decreased to:  Inhale Interval Delay - " + vibrationPattern[4] + "   Exhale Interval Delay - " + vibrationPattern[10]);
         String decrease = "decrease";
         sendMessage(decrease);
+    }
+
+
+    // indicates when one pattern ends and another begins
+    public void patternInterval(){
+        // patternInterval alternates between '0' and '1' whenever the pattern finishes
+        if (patternCounter % 2 == 0){
+            patternInterval = "0";
+        }
+        else {
+            patternInterval = "1";
+        }
+        patternCounter++;
     }
 
 }
