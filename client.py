@@ -8,8 +8,9 @@ async def send_data():
     #uri = "ws://localhost:8765"  #localhost
     uri = "ws://206.87.9.22:8765" #ubcsecure
     
-
+    # connects to websocket server
     async with websockets.connect(uri) as websocket:
+        # sends data to server
         await websocket.send(str(sensor_data[0])) # data must be string, bytes etc.
         await websocket.send(str(sensor_data[1]))
 

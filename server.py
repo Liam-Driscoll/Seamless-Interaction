@@ -39,6 +39,7 @@ async def hello(websocket):
                         f.write(data)
                     except Exception as e:
                         print(e)
+                # decreases vibration pattern 
                 if "decrease" in data:
                     print("Pattern is being decreased...")
                     try:
@@ -48,7 +49,8 @@ async def hello(websocket):
                         print(e)
             except:
                 pass
-
+            
+            # iterates through connected clients
             for connection in connected:
                 # only sends data to other clients (doesn't send to itself)
                 if connection != websocket:
@@ -60,16 +62,21 @@ async def hello(websocket):
     finally:
         connected.remove(websocket)
 
+
+# creates csv file specific to participant
 def createFile(participant):
     try:
         file = open(participant+".csv", "x")
         with open(participant+'.csv', 'a', newline='') as csv_file:
+            # list of column headers
             fieldnames = ["date", "time", "completion_result", "breath_action", "force", "respiration_rate", "participant_id", "heart_rate", "baseline_hr", "pattern_duration", "trial_number", "guidance_type", "event", "pattern_interval"]
             csv_writer = csv.writer(csv_file, delimiter=',')
             csv_writer.writerow(fieldnames)
     except (FileExistsError):
         print("HR file exists")
 
+
+# writes data into csv file
 def writeData(sensor, watch):
     str_data = sensor+","+watch
     data = str_data.split(",")
@@ -78,7 +85,10 @@ def writeData(sensor, watch):
         csv_writer = csv.writer(csv_file, delimiter=',')
         csv_writer.writerow(data)
 
+
+
 async def main():
+    # ...serve(function to run, IP address, port number)
     async with websockets.serve(hello, "206.87.9.22", 8765):
         await asyncio.Future()  # run forever
 

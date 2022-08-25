@@ -15,18 +15,18 @@ def sensorSetUp():
     global goalPattern
     global actions
     actions = []
-    startingPattern = [2000, 2000] # time in (ms)
+    startingPattern = [2000, 2000] # starting breathing pattern, time in (ms)
     pattern = [2000, 2000] # time in (ms)
-    goalPattern = [6000, 6000]
+    goalPattern = [6000, 6000]   # maximum breathing pattern, time in (ms)
     list_of_measurements = [0]
-    time_between_measurements = 300 #in (ms)
+    time_between_measurements = 300 # sampling time in (ms)
     
 
-    #gdx.open_usb()
-    gdx.open_ble("GDX-RB 0K4005K3")
+    #gdx.open_usb()   # opens sensor via USB
+    gdx.open_ble("GDX-RB 0K4005K3")  # opens sensor via Bluetooth
 
-    gdx.select_sensors([1,2])
-    gdx.start(time_between_measurements)
+    gdx.select_sensors([1,2])   # selects sensors to be used
+    gdx.start(time_between_measurements)   # starts data collection, takes sampling time as argument
 
 
 def sensor():
@@ -72,6 +72,8 @@ def sensor():
 
     return completionResult, results
 
+
+# checks if current breathing pattern was completed or not
 def completionCheck():
     global completion
     global sleep
@@ -128,6 +130,8 @@ def completionCheck():
         completion = 0
         return None
         
+    # completion = 1 if the pattern was completed
+    # completion = 0 if the pattern was failed
     else:
         totalCompletion = inhaleCompletion + exhaleCompletion
         if totalCompletion == 2:
@@ -149,6 +153,8 @@ def increasePattern():
             pattern[i] += 250
     print(pattern)
 
+
+# decreases breathing pattern
 def decreasePattern():
     global pattern, startingPattern
     file_path = "decrease.txt"
@@ -165,6 +171,7 @@ def decreasePattern():
             print(f"PATTERN DECREASED TO: {pattern}")
 
 
+# resets breathing pattern 
 def resetPattern():
     global pattern, startingPattern
     file_path = "reset.txt"
