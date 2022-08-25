@@ -30,6 +30,8 @@ public class MainActivity extends Activity {
         mParticipantID = (EditText) findViewById(R.id.ParticipantID);
         Button nextButton = findViewById(R.id.nextButton);
 
+        // Changes functionality depending on how many times the button is pressed
+        // Initally prompts user to enter the participant ID, then their age, then proceeds to the next activity
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -49,16 +51,19 @@ public class MainActivity extends Activity {
         });
     }
 
+    // stores participant ID in variable
     public String writeParticipantID() {
         String participantID = mParticipantID.getText().toString();
         return participantID;
     }
 
+    // stores age in variable
     public String writeAge(){
         String age = mParticipantID.getText().toString();
         return age;
     }
 
+    // transfers participant ID and age values to the next activity (MainActivity2)
     public void transferValues(){
         String fileName = "Participant_" + participantID; // + ".txt";
 

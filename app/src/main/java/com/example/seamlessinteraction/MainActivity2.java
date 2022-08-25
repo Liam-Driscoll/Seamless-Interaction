@@ -29,28 +29,37 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity2 extends AppCompatActivity {
 
+    /////////////////////////////////////////////////////////////////
+    //   NOTE: Throughout when "pattern" is mentioned in comments  //
+    //   it means the same thing as "vibration pattern"            //
+    /////////////////////////////////////////////////////////////////
+
     private static final String SERVER_IP = "206.87.9.22"; // ubcsecure
     //private static final String SERVER_IP = "172.20.10.4"; // hotspot
     //private static final String SERVER_IP = "10.0.2.2"; // localhost
-    public static final String PORT = "8765";
+    public static final String PORT = "8765";    // port number
     private WebSocketClient mWebSocketClient;
 
-    int initial = 2000;
-    int goal = 6000;
-    int pulse = 30;
-    int pulseDelay = 300;
-    int steps = 16;
-    int goalInhaleIntervalDelay = goal - (2 * pulse + pulseDelay);
-    int goalExhaleIntervalDelay = goal - (3 * pulse + 2 * pulseDelay);
-    int initialInhaleIntervalDelay = initial - (2 * pulse + pulseDelay);
-    int initialExhaleIntervalDelay = initial - (3 * pulse + 2 * pulseDelay);
+    int initial = 2000;   // initial breathing pattern in ms
+    int goal = 6000;   // maximum breathing pattern in ms
+    int pulse = 30;   // how long the watch vibrates for
+    int pulseDelay = 300;  // length of time between pulses
+    int steps = 16;   // number of intervals to go from initial pattern to goal pattern
+
+    // the pulse and pulseDelay remain constant regardless of overall pattern length
+    // it is only the down time between "pulse clusters" that increases
+    int goalInhaleIntervalDelay = goal - (2 * pulse + pulseDelay);    // maximum delay after inhale pulses are complete
+    int goalExhaleIntervalDelay = goal - (3 * pulse + 2 * pulseDelay);   // maximum delay after exhale pulses are complete
+    int initialInhaleIntervalDelay = initial - (2 * pulse + pulseDelay);   // minimum delay after inhale pulses are complete
+    int initialExhaleIntervalDelay = initial - (3 * pulse + 2 * pulseDelay);   // minimum delay after exhale pulses are complete
     int inhaleIntervalDelay = initialInhaleIntervalDelay;
     int exhaleIntervalDelay = initialExhaleIntervalDelay;
-    int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/steps;
-    int exhaleStep = (goalExhaleIntervalDelay-exhaleIntervalDelay)/steps;
+    int inhaleStep = (goalInhaleIntervalDelay-inhaleIntervalDelay)/steps;   // increment of the inhale delay
+    int exhaleStep = (goalExhaleIntervalDelay-exhaleIntervalDelay)/steps;   // increment of the exhale delay
 
     // vibration pattern layout:
     // {start delay (ms), vibration time (ms), sleep time (ms), vibration time (ms), sleep time (ms)...}
+    // current general vibration pattern is 2 pulses at beginning of inhale, 3 pulses at beginning of exhale
     long [] goalVibrationPattern = {0, pulse, pulseDelay, pulse, pulseDelay, 0, goalInhaleIntervalDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, pulseDelay, 0, goalExhaleIntervalDelay};
     long[] vibrationPattern = {0, pulse, pulseDelay, pulse, inhaleIntervalDelay, pulse, pulseDelay, pulse, pulseDelay, pulse, exhaleIntervalDelay};
     long [] notificationVibrationPattern = {0, 1000};
@@ -59,33 +68,33 @@ public class MainActivity2 extends AppCompatActivity {
     private SensorManager mSensorManager;
     private Sensor mSensor;
 
-    int eventNumber = 0;
-    int trial = 1;
-    int trialTotal = 1;
-    String trialString = String.valueOf(trial);
+    int eventNumber = 0;   // acts as index for "events" array, begins at start of array
+    int trial = 1;   // current trial number, resets to 1 when guidance type changes, ie. 1 -> 2 -> 3 -> 1 -> 2 -> 3
+    int trialTotal = 1;  // total number of trials completed, used to determine when to end the app/study
+    String trialString = String.valueOf(trial);   // String version of trial number
 
     long vibrationTime = 0;
 
     // Based on even/odd participant ID
     String type = null;
-    double currentHR = 0;
-    int maxHR = 0;
+    double currentHR = 0;   // current HR retrieved from smartwatch's PPG sensor
+    int maxHR = 0;   // maximum heart rate, assigned based on age
     double targetZoneHR = 0.5; // target HR is a fraction of the maximum HR
-    int baselineCount = 0;
-    double baselineSum = 0;
-    int baselineHR = 0;
+    int baselineCount = 0;  // used to calculate average baseline HR (average = sum/count)
+    double baselineSum = 0;  // used to calculate average baseline HR (average = sum/count)
+    int baselineHR = 0;   // average baseline HR over period
     String baselineHR_message;
     String patternDuration;
-    int failCount = 0;
+    int failCount = 0;   // how many times breathing pattern has been failed in a row
 
-    boolean patternComplete = false;
-    boolean heartRateComplete = false;
-    boolean maxTimerComplete = false;
+    boolean patternComplete = false;   // true if current pattern was completed, false if current pattern was failed
+    boolean heartRateComplete = false;   // true if HR reached desired levels (high for exercise, low for breathing guidance), false if did not reach desired levels
+    boolean maxTimerComplete = false;   // true if maximum timer has finished, false if has not finished
 
-    String participantID_string;
-    String participantID_message;
-    String patternInterval = "0";
-    int patternCounter = 0;
+    String participantID_string;   // String version of participant_ID (ie, "1")
+    String participantID_message;   // formatted version of participant ID to be sent to be stored (ie, "P1")
+    String patternInterval = "0";   // value can either be 0 or 1, switches when the vibration pattern completes
+    int patternCounter = 0;   // counter to determine whether to switch to 0 or 1
 
     // list of events/windows/pages in the order they will be displayed
     String [] events = {"Welcome to the Study","Prepare Baseline HR","Measure Baseline HR","Completed Baseline HR","NASA-TLX Survey","Begin Trial",
@@ -96,8 +105,10 @@ public class MainActivity2 extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
+
         // keeps screen on while in application
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+
         Button nextButton = findViewById(R.id.button);
         Button backButton = findViewById(R.id.backButton);
         Button skipButton = findViewById(R.id.skipButton);
@@ -159,15 +170,16 @@ public class MainActivity2 extends AppCompatActivity {
                     eventNumber = 5;
                 }
                 else{
-                    eventNumber--;
+                    eventNumber--;   // goes back an event
                 }
                 Log.d("buttonCount", "Back button pressed");
                 String stringEventNumber = String.valueOf(eventNumber);
                 //Log.d("buttonCount", "Back: " + stringEventNumber);
-                changeEvent(events[eventNumber]);
+                changeEvent(events[eventNumber]);  // changes event
             }
         });
 
+        // goes back an event/window
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -185,6 +197,7 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
     }
+
 
     // changes the event/window/page that the smartwatch displays
     public void changeEvent(String caseNum){
@@ -348,49 +361,63 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    // creates a countdown timer and displays it on the watch
+
+    // creates a countdown timer
     public void timer(long duration){
         TextView timerText = findViewById(R.id.timerText);
         Button skipButton = findViewById(R.id.skipButton);
         Button cancelButton = findViewById(R.id.cancelButton);
 
         CountDownTimer countDownTimer = new CountDownTimer(duration, 1000) {
+            // runs every time the timer ticks
             @Override
             public void onTick(long millisUntilFinished) {
+                // displays timer on watch (currently set to invisible, you can change visibility in switch statements)
                 String sDuration = String.format(Locale.ENGLISH, "%02d : %02d"
                         , TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)
                         , TimeUnit.MILLISECONDS.toSeconds(millisUntilFinished) -
                                 TimeUnit.MINUTES.toSeconds(TimeUnit.MILLISECONDS.toMinutes(millisUntilFinished)));
                 timerText.setText(sDuration);
 
+                // move to next window once heart rate (HR) is at desired level (ie, high HR if performing exercise, low HR if performing breathing guidance)
                 if (heartRateComplete == true){
-                    cancel();
+                    cancel();   // cancels timer
                     heartRateComplete = false;
                 }
+                // move to next window once the maximum timer finishes
+                // maximum timer is set to the max amount of time you want someone to be on an event
+                // used for breathing guidance and exercise events, in case they never reach desired HR
                 else if (maxTimerComplete == true){
-                    cancel();
+                    cancel();   // cancels timer
                     maxTimerComplete = false;
                 }
             }
 
+            // runs when timer finishes
             @Override
             public void onFinish() {
                 Log.d("onFinish", "pattern complete: " + patternComplete);
+
                 // changes open loop pattern when the current pattern has finished (open loop increases continually)
                 // the 'duration < 15000' condition ensures that only the breathing guidance timers are considered
                 if (events[eventNumber] == "Perform Breathing Guidance" && type == "Y" && duration < 15000) {
                     changePattern();
-                    patternInterval();  // data column indicating that breathing pattern has started
+                    patternInterval();  // data column (to be stored in csv) indicating that the next breathing pattern has started
                 }
+
+                // changes closed loop vibration pattern when the current pattern has finished AND they successfully completed the current breathing pattern
                 else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete && duration < 15000){
                     changePattern();
-                    patternInterval();  // data column indicating that breathing pattern has started
-                    patternComplete = false;
+                    patternInterval();  // data column (to be stored in csv) indicating that the next breathing pattern has started
+                    patternComplete = false;  // resets pattern completion variable to false
                 }
+
+                // increases fail count when the current closed loop pattern has finished AND they failed the current breathing pattern
                 else if (events[eventNumber] == "Perform Breathing Guidance" && type == "X" && patternComplete == false && duration < 15000){
-                    patternInterval();  // data column indicating that breathing pattern has started
+                    patternInterval();  // data column (to be stored in csv) indicating that the next breathing pattern has started
                     failCount += 1;
                     Log.d("failCount", "The failCount is: " + failCount);
+                    // pattern is decreased
                     if (failCount >= 2) {
                         decreaseVibration();
                         failCount = 0;
@@ -399,6 +426,7 @@ public class MainActivity2 extends AppCompatActivity {
                         timer(vibrationTime);
                     }
                 }
+
                 // calculates baseline heart rate once the measurement period is finished
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     notificationVibrate();
@@ -408,6 +436,9 @@ public class MainActivity2 extends AppCompatActivity {
                     eventNumber++;
                     changeEvent(events[eventNumber]);
                 }
+
+                // if max timer finishes and they are still on the corresponding event, maxTimerComplete flag is set to true which will
+                // make the application proceed to the next event
                 else if ((events[eventNumber] == "Perform Breathing Guidance" || events[eventNumber] == "Perform Exercise") && duration > 15000){
                     maxTimerComplete = true; // flag used to cancel other timer
                     guidanceVibrate(1);
@@ -419,14 +450,15 @@ public class MainActivity2 extends AppCompatActivity {
             }
         }.start();
 
+        // cancels the breathing guidance and goes back an event
         cancelButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
+
                     // resets the vibration guidance pattern if closed loop guidance is being given
                     resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
-
                 }
                 countDownTimer.cancel();
                 eventNumber--;
@@ -434,16 +466,18 @@ public class MainActivity2 extends AppCompatActivity {
             }
         });
 
-        // gives the ability to skip past timer if needed, ADD SKIP BUTTON TO TIMER() WITH CANCEL BUTTON
+        // gives the ability to skip past timer if needed
         skipButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                // stops current vibrations and resets the vibration pattern
                 if (events[eventNumber] == "Perform Breathing Guidance") {
                     guidanceVibrate(1);
                     // resets the vibration guidance pattern
                     resetVibration(initialInhaleIntervalDelay, initialExhaleIntervalDelay);
 
                 }
+
                 // still calculates baseline heart rate if the measurement period is skipped prematurely
                 else if (events[eventNumber] == "Measure Baseline HR"){
                     baselineHR = (int) (baselineSum / baselineCount);
@@ -457,6 +491,7 @@ public class MainActivity2 extends AppCompatActivity {
         });
     }
 
+
     // switches to guidance type that has not yet been used
     public String switchType(String type){
         if (type == "X"){
@@ -468,6 +503,8 @@ public class MainActivity2 extends AppCompatActivity {
         return type;
     }
 
+
+    // provides a short vibration to users as a way to notify them
     public void notificationVibrate(){
         Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
         final int indexInPatternToRepeat = -1; //-1: don't repeat, 0: repeat
@@ -492,6 +529,8 @@ public class MainActivity2 extends AppCompatActivity {
 
             Log.d("hr",heart_rate);
             Log.d("patternInterval", patternInterval);
+
+            // takes all the data to be stored as arguments
             createMessage(participantID_message, heart_rate, baselineHR_message, patternDuration, events[eventNumber], trialString, type, patternInterval);
         }
 
@@ -503,7 +542,9 @@ public class MainActivity2 extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        mSensorManager.registerListener(mSensorListener, mSensor, SensorManager.SENSOR_DELAY_FASTEST); // can replace "SensorManager.SENSOR_DELAY_NORMAL" with time in microseconds for sampling time
+
+        // can replace "SensorManager.SENSOR_DELAY_FASTEST" with time in microseconds for custom sampling time
+        mSensorManager.registerListener(mSensorListener, mSensor, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -512,7 +553,8 @@ public class MainActivity2 extends AppCompatActivity {
         mSensorManager.unregisterListener(mSensorListener);
     }
 
-    // connect app to web socket, link to processing web socket server
+
+    // connect app to websocket server
     public void connectWebSocket()  {
         URI uri;
         try {
@@ -524,6 +566,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
 
         mWebSocketClient = new WebSocketClient(uri, new Draft_6455()) {
+            // sends csv file name to server when websocket opens
             @Override
             public void onOpen(ServerHandshake serverHandshake) {
                 Intent intent = getIntent();
@@ -535,17 +578,23 @@ public class MainActivity2 extends AppCompatActivity {
                 Log.i("Websocket", "Websocket Opened");
             }
 
+            // runs when a message is received via websocket
             @Override
             public void onMessage(String s) {
                 final String message = s;
                 receiveMessage(message);
             }
 
+            // runs when websocket is closed
             @Override
             public void onClose(int code, String reason, boolean remote) {
                 Log.i("Websocket", "Closed ");
+
+                // gives the error code and reason for closing connection, useful for debugging
                 Log.i("Websocket","Connection closed by " + (remote ? "remote peer" : "us") + " Code: " + code + " Reason: " + reason);
             }
+
+            // runs when there is a websocket error
             @Override
             public void onError(Exception e) {
                 Log.i("Websocket", "Error " + e.getMessage());
@@ -579,6 +628,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // formats data that will be sent to the websocket server and written to csv
     public void createMessage(String pID, String hr, String baselineHR, String patternDuration, String event, String trial, String guidanceType, String patternInterval){
         String delimiter = ",";
         String event_string = String.valueOf(event);
@@ -645,6 +695,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+
     // receives value of age from MainActivity
     public void checkAge(){
         Intent intent = getIntent();
@@ -652,6 +703,7 @@ public class MainActivity2 extends AppCompatActivity {
         int age = Integer.parseInt(age_string);
         hrZone(age);
     }
+
 
     // determines maximum heart rate based on age (https://www.heart.org/en/healthy-living/fitness/fitness-basics/target-heart-rates)
     public void hrZone(int age){
@@ -690,6 +742,8 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+
+    // determines if heart rate is high enough to stop exercise and move to next event
     public void elevatedHR(){
         if (currentHR >= maxHR*targetZoneHR){
             heartRateComplete = true;
@@ -700,6 +754,8 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+
+    // determines if heart rate is low enough to stop breathing guidance and move to next event
     public void relaxedHR(){
         if (currentHR < baselineHR*1.05){
             heartRateComplete = true;
@@ -711,6 +767,7 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
+    // adds values to sum and count of baseline HR to later be used in baseline HR calculation
     public void measureBaselineHR(double hr){
         if (hr > 0) {
             baselineCount++;
@@ -718,7 +775,8 @@ public class MainActivity2 extends AppCompatActivity {
         }
     }
 
-    // resets vibration pattern if guidance is over or interrupted (i.e. back, skip buttons pressed)
+
+    // resets vibration pattern if guidance is over OR interrupted (i.e. back, skip buttons pressed)
     public void resetVibration(int inhaleReset, int exhaleReset){
         for (int i=0; i<vibrationPattern.length; i++){
             if (vibrationPattern[i] == inhaleIntervalDelay){
@@ -738,6 +796,8 @@ public class MainActivity2 extends AppCompatActivity {
         sendMessage(reset);
     }
 
+
+    //  decreases the vibration pattern
     public void decreaseVibration(){
         // prevents vibration pattern from decreasing below starting pattern
         if (inhaleIntervalDelay > initialInhaleIntervalDelay) {
