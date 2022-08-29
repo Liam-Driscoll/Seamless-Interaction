@@ -60,6 +60,7 @@ adb connect 127.0.0.1:4444
 - You will then be able to install the app on the watch 
 
 ## Connect to Server 
+### Watch
 
 - Change the IP address in “MainActivity2.java” in the “Seamless Interaction” project to match the IP address of the network you are connected to 
 
