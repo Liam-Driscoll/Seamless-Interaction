@@ -59,6 +59,44 @@ adb connect 127.0.0.1:4444
 
 - You will then be able to install the app on the watch 
 
+# Sensor Set Up 
+
+## Basic information on how to use sensor 
+
+- Tutorial [video](https://www.youtube.com/watch?v=-2Qgvu1Ygmw ) (watch until ~1:00) 
+
+- Helpful [resource](https://github.com/VernierST/godirect-examples/tree/main/python) for Python programming with sensor  
+
+- README for sensor functions is found in ```gdx/readme.md```
+
+- Sensor lights 
+
+  - Checkmark light (located in bottom left corner):  
+
+    - Shines GREEN if there is an adequate amount of force being applied 
+
+    - Shines RED if there is too much force being applied 
+
+  - Bluetooth light (located above power button): 
+
+    - Blinks RED when Bluetooth is on 
+
+    - Blinks GREEN when Bluetooth is connected 
+
+  - Charging light (located below power button): 
+
+    - Shines ORANGE when charging 
+
+- Press the power button to turn on the sensor’s Bluetooth functionality (Bluetooth light should begin blinking red) 
+
+# Server Set Up 
+
+- Change the IP address located in “server.py” within the main() function to the IP address of the network you are connected to 
+
+> Note: You don’t need to change the port, but if you do make sure the same port is used for the server and the clients (watch and sensor)	 
+
+- To start the server, run the “server.py” file 
+
 ## Connect to Server 
 ### Watch
 
@@ -68,6 +106,22 @@ adb connect 127.0.0.1:4444
 
 - Once the IP address is changed, install the application onto the watch  
 
-- The app should automatically connect to the server any time it is opened if the server is currently running, but if it is not connecting to the server try reinstalling the app onto the watch (will need to run adb commands) 
+- The app should automatically connect to the server any time it is opened if the server is currently running, but if it is not connecting to the server try reinstalling the app onto the watch (will need to run adb commands)
+
+### Sensor
+
+- Change the IP address in “client.py” to match the IP address of the network you are connected to 
+
+> Note: You don’t need to change the port, but if you do make sure the same port is used for the server and the clients (watch and sensor) 
+
+- Once the IP address is changed, the sensor’s Bluetooth light is blinking red, and the server is running, run the “client.py” file 
+
+- The sensor will connect to the server if the server is currently running
 
 > Note: Data will begin to be collected once both the watch and sensor are connected to the server
+
+## Data Storage 
+
+- Data is stored in a separate csv file for each participant (i.e., Participant 1 and Participant 2 will both have their own separate csv files) 
+
+- The saved csv files are located in the same directory as the “server.py” file 
